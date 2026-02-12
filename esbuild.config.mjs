@@ -11,7 +11,7 @@ if you want to view the source, please visit the github repository of this plugi
 
 const prod = (process.argv[2] === 'production');
 
-esbuild.build({
+const buildOptions = {
 	banner: {
 		js: banner,
 	},
@@ -19,10 +19,16 @@ esbuild.build({
 	bundle: true,
 	external: ['obsidian', 'electron', ...builtins],
 	format: 'cjs',
-	watch: !prod,
 	target: 'es2016',
 	logLevel: "info",
 	sourcemap: prod ? false : 'inline',
 	treeShaking: true,
 	outfile: 'main.js',
-}).catch(() => process.exit(1));
+};
+
+if (prod) {
+	await esbuild.build(buildOptions);
+} else {
+	const ctx = await esbuild.context(buildOptions);
+	await ctx.watch();
+}

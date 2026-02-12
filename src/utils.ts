@@ -1,7 +1,5 @@
 import { normalizePath } from "obsidian";
-//import { App, normalizePath } from "obsidian";
 import {
-	//Reference,
 	Creator,
 	CreatorArray,
 	Reference,
@@ -34,7 +32,7 @@ export function replaceAllTemplates(
 	return copy;
 }
 
-export function escapeRegExp(stringAdd: string) {
+function escapeRegExp(stringAdd: string) {
 	return stringAdd.replace(/[.*+\-?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
 }
 
@@ -500,25 +498,6 @@ export const createCreatorAllList = (
 		return note;
 	}
 };
-
-export function createTagList(tagList: string[], note: string) {
-	if (tagList.length == 0) {
-		return note;
-	} else {
-		const tagListBraket = tagList.map(makeWiki);
-		note = replaceTemplate(
-			note,
-			`[[{{keywords}}]]`,
-			String(tagListBraket.join("; "))
-		);
-		note = replaceTemplate(
-			note,
-			`{{keywords}}`,
-			String(tagList.join("; "))
-		);
-		return note;
-	}
-}
 
 //function to replace the missing fields in the template
 export function replaceMissingFields(

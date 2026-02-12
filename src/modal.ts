@@ -2,7 +2,7 @@ import MyPlugin from "./main";
 import * as fs from "fs";
 import { App, Modal, FuzzySuggestModal, Notice, Platform } from "obsidian";
 
-import { Reference, AnnotationElements } from "./types";
+import { Reference } from "./types";
 
 import {
 	createAuthorKey,
@@ -24,8 +24,6 @@ export class fuzzySelectEntryFromJson extends FuzzySuggestModal<Reference> {
 		version: string;
 		__proto__: Record<string, never>;
 	};
-	keyWordArray: string[];
-	noteElements: AnnotationElements[];
 
 	constructor(app: App, plugin: MyPlugin) {
 		super(app);
