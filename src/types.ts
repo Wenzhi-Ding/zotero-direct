@@ -84,40 +84,6 @@ export interface Reference {
 	zoteroTags: string[];
 }
 
-export interface AnnotationElements {
-	annotationType: string;
-	citeKey: string;
-	commentText: string;
-	commentFormatted: string;
-	commentFormattedNoPrepend: string;
-	highlightText: string;
-	highlightColour: string;
-	highlightFormatted: string;
-	highlightFormattedNoPrepend: string;
-	inlineTagsText: string;
-	inlineTagsArray: string[];
-	inlineTagsFormatted: string;
-	inlineTagsFormattedNoPrepend: string;
-	indexNote: number;
-	rowOriginal: string;
-	rowEdited: string;
-	foundOld: boolean;
-	positionOld: number;
-	extractionSource: string;
-	colourTemplate: string;
-	colourTemplateFormatted: string;
-	colourTemplateNoPrepend: string;
-	colourTextBefore: string;
-	colourTextAfter: string;
-	imagePath: string;
-	pagePDF: number;
-	pageLabel: number;
-	attachmentURI: string;
-	zoteroBackLink: string;
-	annotationKey: string;
-}
-[];
-
 export interface Creator {
 	creatorType: string;
 	firstName: string;

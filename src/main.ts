@@ -1,6 +1,5 @@
 // Import fs
 import * as fs from "fs";
-import { Debugout } from "debugout.js";
 
 import { Plugin, Notice } from "obsidian";
 
@@ -664,14 +663,6 @@ export default class MyPlugin extends Plugin {
 		selectedEntry.authorKey = authorKey;
 		selectedEntry.authorKeyInitials = createAuthorKeyInitials(selectedEntry.creators)
 		selectedEntry.authorKeyFullName = createAuthorKeyFullName(selectedEntry.creators)
-
-
-
-		//create bugout to store and export logs in a file
-		let bugout = new Debugout({ realTimeLoggingOn: false });
-		if (this.settings.debugMode === true) {
-			bugout = new Debugout({ realTimeLoggingOn: true });
-		}
 
 		//Load Template
 		const templateNote = this.importTemplate();

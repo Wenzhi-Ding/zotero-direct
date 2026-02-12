@@ -123,14 +123,5 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	missingfieldreplacement: "NA",
 };
 
-export enum HeaderLevels {
-	"typeH1" = 1,
-	"typeH2" = 2,
-	"typeH3" = 3,
-	"typeH4" = 4,
-	"typeH5" = 5,
-	"typeH6" = 6,
-}
-
 export const TEMPLATE_REG = /\{\{[^}]+\}\}/g;
 export const TEMPLATE_BRACKET_REG = /\[\[\{\{[^}]+\}\}\]\]/g;
