@@ -111,7 +111,7 @@ If you need full annotation import features, we recommend using the original [st
   - {{eprint}}
   - {{file}}: local path of the file attached to the entry
   - {{filePath}}: links to attachments associated with this entry within Zotero (without opening the reader)
-  - "{{zoteroReaderLink}}": links to open the specific attachment within the Zotero reader. This is different from {{file}} which opens the attachment in an external reader
+  - {{zoteroReaderLink}}: links to open the specific attachment within the Zotero reader. This is different from {{file}} which opens the attachment in an external reader
   - {{localLibrary}}: link to the entry in the Zotero app
   - {{select}}: link to the attachment in the Zotero app
   - {{keywordsZotero}}: tags found in the entry metadata
