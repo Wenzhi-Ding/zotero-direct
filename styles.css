@@ -1,0 +1,364 @@
+/* ═════════════════════════════════════════════════════════════════════════════
+   BibNotes - Modern Search Suggestion UI
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Suggestion Container Styles
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Main suggestion container */
+.suggestion-container {
+    --suggestion-bg: var(--background-primary, #1e1e1e);
+    --suggestion-bg-hover: var(--background-modifier-hover, rgba(255, 255, 255, 0.075));
+    --suggestion-border: var(--background-modifier-border, #333);
+    --suggestion-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --suggestion-radius: 12px;
+    --suggestion-item-padding: 12px 16px;
+    --suggestion-divider: var(--background-modifier-border-hover, #444);
+    --suggestion-gap: 6px;
+
+    background: var(--suggestion-bg);
+    border: 1px solid var(--suggestion-border);
+    border-radius: var(--suggestion-radius);
+    box-shadow: var(--suggestion-shadow);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Individual Suggestion Item
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Base suggestion item styling */
+.suggestion-item {
+    padding: 0;
+    margin: 0;
+    border-bottom: 1px solid var(--suggestion-divider);
+    transition: background 0.15s ease;
+    cursor: pointer;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item.is-selected {
+    background: var(--suggestion-bg-hover) !important;
+}
+
+.suggestion-item:hover {
+    background: var(--background-modifier-active-hover, rgba(255, 255, 255, 0.05)) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   BibNotes Custom Suggestion Layout
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Main container for each suggestion */
+.bibnotes-suggestion-container {
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Row 1: Title
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.bibnotes-suggestion-title-row {
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.bibnotes-suggestion-title {
+    font-size: 14.5px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--text-normal, #e0e0e0);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Row 2: Authors
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.bibnotes-suggestion-authors-row {
+    width: 100%;
+}
+
+/* Authors - single line, dynamically truncated */
+.bibnotes-suggestion-authors {
+    font-size: 13px;
+    color: var(--text-muted, #888);
+    font-weight: 500;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Row 3: Journal + Year + Citation Key
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.bibnotes-suggestion-journal-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    margin-top: 0;
+}
+
+.bibnotes-suggestion-journal-left {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.bibnotes-suggestion-journal {
+    font-size: 12px;
+    color: var(--text-muted, #888);
+    font-weight: 400;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+/* Citation Key - subtle gray style with max width */
+.bibnotes-suggestion-citekey {
+    font-size: 11px;
+    font-family: var(--font-monospace, 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace);
+    font-weight: 400;
+    color: var(--text-faint, #666);
+    background: transparent;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 0;
+    letter-spacing: 0.2px;
+    border: 1px solid var(--background-modifier-border, rgba(255, 255, 255, 0.1));
+    max-width: min(300px, 45%);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Row 4: Context (Abstract/Tags match)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.bibnotes-suggestion-context-row {
+    width: 100%;
+    margin-top: 2px;
+    padding-top: 0;
+    border-top: none;
+}
+
+.bibnotes-suggestion-context {
+    font-size: 11px;
+    color: var(--text-faint, #666);
+    font-weight: 400;
+    line-height: 1.4;
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Context highlights always visible, not affected by hover */
+.bibnotes-suggestion-context .bibnotes-suggestion-highlight {
+    font-weight: 600;
+}
+
+.bibnotes-context-abstract::before {
+    content: '"';
+    color: var(--text-faint, #666);
+}
+
+.bibnotes-context-abstract::after {
+    content: '"';
+    color: var(--text-faint, #666);
+}
+
+.bibnotes-context-tags {
+    font-style: normal;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Highlight Styling for Search Matches
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.bibnotes-suggestion-highlight {
+    background: linear-gradient(180deg, 
+        transparent 0%, 
+        var(--text-highlight-bg, rgba(255, 215, 0, 0.3)) 0%, 
+        var(--text-highlight-bg, rgba(255, 215, 0, 0.3)) 100%, 
+        transparent 100%
+    );
+    color: var(--text-normal, #fff);
+    font-weight: 600;
+    border-radius: 2px;
+    padding: 0 1px;
+}
+
+/* Alternate highlight style for better visibility in dark themes */
+.theme-dark .bibnotes-suggestion-highlight {
+    background: linear-gradient(180deg,
+        transparent 0%,
+        rgba(255, 193, 7, 0.35) 0%,
+        rgba(255, 193, 7, 0.35) 100%,
+        transparent 100%
+    );
+    color: #ffd700;
+}
+
+.theme-light .bibnotes-suggestion-highlight {
+    background: linear-gradient(180deg,
+        transparent 0%,
+        rgba(255, 193, 7, 0.5) 0%,
+        rgba(255, 193, 7, 0.5) 100%,
+        transparent 100%
+    );
+    color: #b8860b;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Selected State Enhancements
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.suggestion-item.is-selected .bibnotes-suggestion-title {
+    color: var(--text-normal, #fff);
+}
+
+.suggestion-item.is-selected .bibnotes-suggestion-authors {
+    color: var(--text-muted, #aaa);
+}
+
+.suggestion-item.is-selected .bibnotes-suggestion-journal {
+    color: var(--text-muted, #999);
+}
+
+.suggestion-item.is-selected .bibnotes-suggestion-citekey {
+    color: var(--text-faint, #777);
+    border-color: var(--background-modifier-border-hover, rgba(255, 255, 255, 0.15));
+}
+
+.suggestion-item.is-selected .bibnotes-suggestion-context {
+    color: var(--text-faint, #666);
+}
+
+.suggestion-item:hover .bibnotes-suggestion-context {
+    color: var(--text-faint, #666);
+}
+
+.suggestion-item.is-selected .bibnotes-suggestion-context .bibnotes-suggestion-highlight,
+.suggestion-item:hover .bibnotes-suggestion-context .bibnotes-suggestion-highlight {
+    background: linear-gradient(180deg, 
+        transparent 0%, 
+        var(--text-highlight-bg, rgba(255, 215, 0, 0.3)) 0%, 
+        var(--text-highlight-bg, rgba(255, 215, 0, 0.3)) 100%, 
+        transparent 100%
+    );
+    color: var(--text-normal, #fff);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Empty State & Loading
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.bibnotes-suggestion-empty {
+    padding: 24px 16px;
+    text-align: center;
+    color: var(--text-muted, #888);
+    font-size: 13px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Scrollbar Styling
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.suggestion-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.suggestion-container::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 0 12px 12px 0;
+}
+
+.suggestion-container::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb-bg, rgba(255, 255, 255, 0.15));
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.suggestion-container::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-bg-hover, rgba(255, 255, 255, 0.25));
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Animations
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@keyframes bibnotes-fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.suggestion-container {
+    animation: bibnotes-fadeIn 0.2s ease-out;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Responsive Adjustments
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+    .bibnotes-suggestion-container {
+        padding: 12px 14px;
+    }
+
+    .bibnotes-suggestion-title {
+        font-size: 14px;
+    }
+
+    .bibnotes-suggestion-meta,
+    .bibnotes-suggestion-authors {
+        font-size: 11px;
+    }
+
+    .bibnotes-suggestion-citekey {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Focus Ring for Accessibility
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.suggestion-item:focus-visible {
+    outline: 2px solid var(--interactive-accent, #7ee787);
+    outline-offset: -2px;
+}

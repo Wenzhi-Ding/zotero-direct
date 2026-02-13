@@ -1,11 +1,10 @@
 {
-  "id": "bibnotes_minimal",
-  "name": "BibNotes Formatter (Minimal)",
+  "id": "zotero-direct",
+  "name": "Zotero Direct",
   "version": "0.10.0",
-  "minAppVersion": "0.12.0",
-  "description": "Plugin to import and format annotations from Zotero.",
-  "author": "Stefano Pagliari; Wenzhi Ding",
+  "minAppVersion": "1.0.0",
+  "description": "Plugin to import and format metadata from Zotero.",
+  "author": "Wenzhi Ding",
   "authorUrl": "https://www.wenzhi-ding.com",
-  "isDesktopOnly": true,
-  "repo": "Wenzhi-Ding/bibnotes_minimal"
+  "isDesktopOnly": true
 }

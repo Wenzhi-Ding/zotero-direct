@@ -1,17 +1,17 @@
 
 
-export interface MyPluginSettings {
-	bibPath: string;
+export interface ZoteroDirectSettings {
+	zoteroDbPath: string;
 	templateContent: string;
-	templateType: string;
+	templateType: "Plain" | "Admonition" | "Custom";
 	exportPath: string;
 	exportTitle: string;
-	missingfield: string;
-	saveManualEdits: string;
+	missingfield: "Leave placeholder" | "Remove (entire row)" | "Replace with custom text";
+	saveManualEdits: "Save Entire Note" | "Select Section" | "Overwrite Entire Note";
 	saveManualEditsStart: string;
 	saveManualEditsEnd: string;
 	lastUpdateDate: Date;
-	updateLibrary: string;
+	updateLibrary: "Only update existing notes" | "Create new notes when missing";
 	isDoubleSpaced: boolean;
 	multipleFieldsDivider: string;
 	nameFormat: string;
@@ -43,6 +43,7 @@ export interface Reference {
 	volume: number;
 	issue: number;
 	pages: string;
+	abstractNote: string;
 	creators: {
 		creatorType: string;
 		firstName: string;
@@ -51,6 +52,7 @@ export interface Reference {
 	}[];
 	file: string;
 	filePath: string;
+	dateEnacted: string;
 	zoteroReaderLink: string;
 	localLibrary: string;
 	localLibraryLink: string;

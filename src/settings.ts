@@ -1,10 +1,16 @@
 import MyPlugin from "./main";
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, PluginSettingTab, Setting, Notice, FileSystemAdapter, debounce } from "obsidian";
 import { FolderSuggest } from "./suggesters/FolderSuggester"
+import { t } from "./i18n";
 
 
 export class SettingTab extends PluginSettingTab {
 	plugin: MyPlugin;
+	private debouncedSave = debounce(
+		async () => { await this.plugin.saveSettings(); },
+		500,
+		true
+	);
 	constructor(app: App, plugin: MyPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
@@ -15,71 +21,108 @@ export class SettingTab extends PluginSettingTab {
 		const { settings } = plugin;
 
 		containerEl.empty();
+		const s = t();
 
-		containerEl.createEl('h1', { text: 'BibNotes Formatter (for Zotero) ' });
-		containerEl.createEl('h2', { text: 'Import Library' });
+		new Setting(containerEl).setName(s.pluginTitle).setHeading();
+		new Setting(containerEl).setName(s.sectionImportLibrary).setHeading();
 
 		new Setting(containerEl)
-			.setName("BetterBibTex Json File")
-			.setDesc("Add relative path from the vault folder to the *BetterBibTex Json* file to be imported. For instance, add `library.json` if the file (library.json) is in the root folder. Instead, if the file is in a subfolder, specify first the subfolder followed by the name of the file (e.g. 'zotero/library.json' if the json file is located in a subfolder of your vault called 'zotero') ")
+			.setName(s.zoteroDbPathName)
+			.setDesc(s.zoteroDbPathDesc)
 			.addText((text) =>
 				text
-					.setPlaceholder("/path/to/BetterBibTex.json")
-					.setValue(settings.bibPath)
+					.setPlaceholder(s.zoteroDbPathPlaceholder)
+					.setValue(settings.zoteroDbPath)
 					.onChange(async (value) => {
-						console.log("Path Bib: " + value);
-						settings.bibPath = value;
-						await plugin.saveSettings();
+						settings.zoteroDbPath = value;
+						this.debouncedSave();
 					})
 			);
 
+		new Setting(containerEl)
+			.setName(s.cacheStatusName)
+			.setDesc(s.cacheStatusDesc)
+			.addExtraButton((button) => {
+				button.setIcon("sync")
+					.setTooltip(s.cacheRebuildTooltip)
+					.onClick(async () => {
+						if (!settings.zoteroDbPath) {
+							new Notice(s.cacheSetPathFirst);
+							return;
+						}
+						new Notice(s.cacheRebuilding);
+						try {
+							const { clearCacheManager, getCacheManager } = await import("./zotero-cache");
+							const { readZoteroDatabase } = await import("./zotero-db");
+							// Clear old cache
+							clearCacheManager();
+							const cacheManager = getCacheManager(this.app, settings.zoteroDbPath);
+						await cacheManager.clearCache();
+							// Get plugin directory path
+							const vaultBasePath = this.app.vault.adapter instanceof FileSystemAdapter ? this.app.vault.adapter.getBasePath() : "";
+							const pluginDir = vaultBasePath && this.plugin.manifest.dir
+							? vaultBasePath + "/" + this.plugin.manifest.dir
+								: this.plugin.manifest.dir || "";
+							// Full read from Zotero database
+							const data = await readZoteroDatabase(settings.zoteroDbPath, pluginDir);
+							cacheManager.updateCache(data.items, data.collections);
+							await cacheManager.saveCache();
+							new Notice(s.cacheRebuiltSuccess(data.items.length));
+							this.display();
+						} catch (e) {
+							new Notice(s.cacheRebuildFailed + (e as Error).message);
+							console.error("[BibNotes] Cache rebuild error:", e);
+						}
+					});
+			})
+			.addText((text) => {
+				text.setDisabled(true);
+				import("./zotero-cache").then(({ getCacheManager }) => {
+					const cacheManager = getCacheManager(this.app, settings.zoteroDbPath);
+					const stats = cacheManager.getCacheStats();
+					if (stats.itemCount > 0) {
+						text.setValue(s.cacheItemsCached(stats.itemCount));
+					} else {
+						text.setValue(s.cacheNone);
+					}
+				});
+			});
 
-
-		containerEl.createEl('h2', { text: 'Export Notes' });
+		new Setting(containerEl).setName(s.sectionExportNotes).setHeading();
 
 		new Setting(containerEl)
-			.setName("Export Path")
-			.setDesc("Add the relative path to the folder inside your vault where the notes will be exported")
+			.setName(s.exportPathName)
+			.setDesc(s.exportPathDesc)
 			.addSearch((cb) => {
 				new FolderSuggest(this.app, cb.inputEl);
-				cb.setPlaceholder("Example: folder1/folder2")
+				cb.setPlaceholder(s.exportPathPlaceholder)
 					.setValue(this.plugin.settings.exportPath)
 					.onChange(async (new_folder) => {
-						settings.exportPath = new_folder;
+					settings.exportPath = new_folder;
 						await plugin.saveSettings();
 					});
-				// @ts-ignore
-			})
+			});
 
 		new Setting(containerEl)
-			.setName("Note Title")
-			.setDesc("Select the format of the title of the note. Possible values include: {{citeKey}}, {{title}}, {{author}},{{authorInitials}}, {{authorFullName}} {{year}}")
+			.setName(s.noteTitleName)
+			.setDesc(s.noteTitleDesc)
 			.addText((text) =>
 				text
-					.setPlaceholder("{{citeKey}}")
+					.setPlaceholder(s.noteTitlePlaceholder)
 					.setValue(settings.exportTitle)
 					.onChange(async (value) => {
 						settings.exportTitle = value;
-						await plugin.saveSettings();
+						this.debouncedSave();
 					})
 			);
 
-
-
-
-
-
-
-
 		new Setting(containerEl)
-			.setName("Select Template")
-			.setDesc(
-				"Select one of the default templates or provide a custom one."
-			)
+			.setName(s.selectTemplateName)
+			.setDesc(s.selectTemplateDesc)
 			.addDropdown((d) => {
-				d.addOption("Plain", "Plain");
-				d.addOption("Admonition", "Admonition");
-				d.addOption("Custom", "Custom Template");
+				d.addOption("Plain", s.templatePlain);
+				d.addOption("Admonition", s.templateAdmonition);
+				d.addOption("Custom", s.templateCustom);
 				//d.addOption("Import from Note", "Import from Note");
 				d.setValue(settings.templateType);
 				d.onChange(
@@ -88,43 +131,37 @@ export class SettingTab extends PluginSettingTab {
 							| "Plain"
 							| "Admonition"
 							| "Custom"
-						//| "Import from Note"
 					) => {
 						settings.templateType = v;
 						await plugin.saveSettings();
 						this.display();
-
 					}
 				);
-			}
-			);
+			});
 		if (settings.templateType === "Custom") {
 			new Setting(containerEl)
-				.setName('Custom Template')
+				.setName(s.customTemplateName)
 				.addTextArea((text) => {
 					text.inputEl.rows = 10;
 					// this is not strictly necessary, but it makes it a lot easier to read long lines
-					text.inputEl.style.width = "100%";
+					text.inputEl.setCssProps({ "width": "100%" });
 					text.setValue(settings.templateContent).onChange(
 						async (value) => {
 							settings.templateContent = value;
-							await plugin.saveSettings();
+							this.debouncedSave();
 							//this.display();
 						}
 					);
 				});
 		}
 
-
 		new Setting(containerEl)
-			.setName("Missing Fields")
-			.setDesc(
-				"Fields that are present in the template but missing from the selected field."
-			)
+			.setName(s.missingFieldsName)
+			.setDesc(s.missingFieldsDesc)
 			.addDropdown((d) => {
-				d.addOption("Leave placeholder", "Leave placeholder");
-				d.addOption("Remove (entire row)", "Remove (entire row)");
-				d.addOption("Replace with custom text", "Replace with custom text");
+				d.addOption("Leave placeholder", s.missingFieldLeavePlaceholder);
+				d.addOption("Remove (entire row)", s.missingFieldRemoveRow);
+				d.addOption("Replace with custom text", s.missingFieldReplaceCustom);
 				d.setValue(settings.missingfield);
 				d.onChange(
 					async (
@@ -141,56 +178,48 @@ export class SettingTab extends PluginSettingTab {
 			});
 		if (settings.missingfield === "Replace with custom text") {
 			new Setting(containerEl)
-				.setName("Replacement for missing fields")
+				.setName(s.missingFieldReplacementName)
 				.addText((text) =>
 					text
 						.setValue(settings.missingfieldreplacement)
 						.onChange(async (value) => {
 							settings.missingfieldreplacement = value;
-							await plugin.saveSettings();
+							this.debouncedSave();
 						})
 				);
 		}
 
 		new Setting(containerEl)
-			.setName("Multiple Entries Divider")
-			.setDesc('Type the character or expression that should separate multiple values when found in the same field (e.g. authors, editors, tags, collections).')
+			.setName(s.multipleEntriesDividerName)
+			.setDesc(s.multipleEntriesDividerDesc)
 			.addTextArea((text) =>
 				text
 					.setValue(settings.multipleFieldsDivider)
 					.onChange(async (value) => {
 						settings.multipleFieldsDivider = value;
-						await plugin.saveSettings();
-						//this.display();
-					}
-					)
-			)
+					this.debouncedSave();
+					})
+			);
 
 		new Setting(containerEl)
-			.setName("Format Names")
-			.setDesc('Specify how the names of the authors/editors should be exported. Accepted values are {{firstName}}, {{lastName}} and {{firstNameInitials}}')
+			.setName(s.formatNamesName)
+			.setDesc(s.formatNamesDesc)
 			.addTextArea((text) =>
 				text
 					.setValue(settings.nameFormat)
 					.onChange(async (value) => {
 						settings.nameFormat = value;
 						await plugin.saveSettings();
-						//this.display();
-					}
-					)
-			)
-
-
+					})
+			);
 
 		new Setting(containerEl)
-			.setName("Save Manual Edits")
-			.setDesc(
-				'Select "Yes" to preserve the manual edits made to the previously extracted note (e.g. block references, comments added manually, fixed typos) when this is updated. Select "No" to overwrite any manual change to the extracted annotation when this is updated.'
-			)
+			.setName(s.saveManualEditsName)
+			.setDesc(s.saveManualEditsDesc)
 			.addDropdown((d) => {
-				d.addOption("Save Entire Note", "Save Entire Note");
-				d.addOption("Select Section", "Select Section");
-				d.addOption("Overwrite Entire Note", "Overwrite Entire Note");
+				d.addOption("Save Entire Note", s.saveEntireNote);
+				d.addOption("Select Section", s.selectSection);
+				d.addOption("Overwrite Entire Note", s.overwriteEntireNote);
 				d.setValue(settings.saveManualEdits);
 				d.onChange(
 					async (
@@ -208,48 +237,40 @@ export class SettingTab extends PluginSettingTab {
 
 		if (settings.saveManualEdits == "Select Section") {
 			new Setting(containerEl)
-				.setName("Start - Save Manual Edits")
-				.setDesc(
-					"Define string (e.g. '## Notes') in the template starting from where updating the note will not overwrite the existing text. If field is left empty, the value will be set to the beginning of the note"
-				)
+				.setName(s.saveManualEditsStartName)
+				.setDesc(s.saveManualEditsStartDesc)
 				.addText((text) =>
 					text
 						.setValue(settings.saveManualEditsStart)
 						.onChange(async (value) => {
 							settings.saveManualEditsStart = value;
-							await plugin.saveSettings();
+							this.debouncedSave();
 						})
 				);
 
-
 			if (settings.saveManualEdits) {
 				new Setting(containerEl)
-					.setName("End - Save Manual Edits")
-					.setDesc(
-						"Define string (e.g. '## Notes') in the template until where updating the note will not overwrite the existing text. If field is left empty, the value will be set to the end of the note"
-					)
+					.setName(s.saveManualEditsEndName)
+					.setDesc(s.saveManualEditsEndDesc)
 					.addText((text) =>
 						text
 							.setValue(settings.saveManualEditsEnd)
 							.onChange(async (value) => {
 								settings.saveManualEditsEnd = value;
-								await plugin.saveSettings();
+								this.debouncedSave();
 							})
 					);
 			}
 		}
 
-
-		containerEl.createEl('h2', { text: 'Update Library' });
+		new Setting(containerEl).setName(s.sectionUpdateLibrary).setHeading();
 
 		new Setting(containerEl)
-			.setName("Update Existing/All Notes")
-			.setDesc(
-				"Select whether to create new notes that are missing from Obsidian but present/modified within Zotero when runing the Update Library command"
-			)
+			.setName(s.updateExistingAllName)
+			.setDesc(s.updateExistingAllDesc)
 			.addDropdown((d) => {
-				d.addOption("Only update existing notes", "Only existing notes");
-				d.addOption("Create new notes when missing", "Create new notes when missing");
+				d.addOption("Only update existing notes", s.onlyUpdateExisting);
+				d.addOption("Create new notes when missing", s.createNewWhenMissing);
 				d.setValue(settings.updateLibrary);
 				d.onChange(
 					async (
@@ -262,12 +283,5 @@ export class SettingTab extends PluginSettingTab {
 					}
 				);
 			});
-
-
-
-
 	}
 }
-
-
-

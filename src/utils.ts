@@ -1,10 +1,9 @@
-import { normalizePath } from "obsidian";
+import { App, normalizePath } from "obsidian";
 import {
 	Creator,
 	CreatorArray,
 	Reference,
 } from "./types";
-import path from "path";
 
 import { TEMPLATE_BRACKET_REG, TEMPLATE_REG } from "./constants";
 
@@ -54,50 +53,51 @@ export const createAuthorKey = (creators: CreatorArray) => {
 	let authorKeyFixed = "";
 	let editorKeyFixed = "";
 	for (let creatorindex = 0; creatorindex < creators.length; creatorindex++) {
-		const creator: Creator = creators[creatorindex]; //select the author
 
+		const creator = creators[creatorindex]; //select the author
+		if (!creator) continue;
 		if (creator.creatorType === "author") {
-			if (creator.hasOwnProperty("name")) {
+			if (creator.name) {
 				//authorList.push(creator.name)
 				authorKey.push(creator.name);
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				creator.lastName &&
+				creator.firstName
 			) {
 				//authorList.push(creator.lastName + ", " + creator.firstName)
 				authorKey.push(creator.lastName);
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				!creator.hasOwnProperty("firstName")
+				creator.lastName &&
+				!creator.firstName
 			) {
 				//authorList.push(creator.lastName)
 				authorKey.push(creator.lastName);
 			} else if (
-				!creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				!creator.lastName &&
+				creator.firstName
 			) {
 				//authorList.push(creator.firstName)
 				authorKey.push(creator.firstName);
 			}
 		} else if (creator.creatorType === "editor") {
-			if (creator.hasOwnProperty("name")) {
+			if (creator.name) {
 				//editorList.push(creator.name)
 				editorKey.push(creator.name);
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				creator.lastName &&
+				creator.firstName
 			) {
 				//editorList.push(creator.lastName + ", " + creator.firstName)
 				editorKey.push(creator.lastName);
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				!creator.hasOwnProperty("firstName")
+				creator.lastName &&
+				!creator.firstName
 			) {
 				//editorList.push(creator.lastName)
 				editorKey.push(creator.lastName);
 			} else if (
-				!creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				!creator.lastName &&
+				creator.firstName
 			) {
 				//editorList.push(creator.firstName)
 				editorKey.push(creator.firstName);
@@ -108,39 +108,39 @@ export const createAuthorKey = (creators: CreatorArray) => {
 	//Adjust the authorKey depending on the number of authors
 
 	if (authorKey.length == 1) {
-		authorKeyFixed = authorKey[0];
+		authorKeyFixed = authorKey[0] ?? "";
 	}
 	if (authorKey.length == 2) {
-		authorKeyFixed = authorKey[0] + " and " + authorKey[1];
+		authorKeyFixed = (authorKey[0] ?? "") + " and " + (authorKey[1] ?? "");
 	}
 
 	if (authorKey.length == 3) {
-		authorKeyFixed = authorKey[0] + ", " + authorKey[1] + " and " + authorKey[2];
+		authorKeyFixed = (authorKey[0] ?? "") + ", " + (authorKey[1] ?? "") + " and " + (authorKey[2] ?? "");
 	}
 
 	if (authorKey.length > 3) {
-		authorKeyFixed = authorKey[0] + " et al.";
+		authorKeyFixed = (authorKey[0] ?? "") + " et al.";
 	}
 	if (authorKey.length > 0) { return authorKeyFixed }
 
 	//If there are no authors (because it is an edited book), then returns the name of the editors
 	if (editorKey.length == 1) {
-		editorKeyFixed = editorKey[0];
+		editorKeyFixed = editorKey[0] ?? "";
 	}
 	if (editorKey.length == 2) {
-		editorKeyFixed = editorKey[0] + " and " + editorKey[1];
+		editorKeyFixed = (editorKey[0] ?? "") + " and " + (editorKey[1] ?? "");
 	}
 
 	if (editorKey.length == 3) {
-		editorKeyFixed = editorKey[0] + ", " + editorKey[1] + " and " + editorKey[2];
+		editorKeyFixed = (editorKey[0] ?? "") + ", " + (editorKey[1] ?? "") + " and " + (editorKey[2] ?? "");
 	}
 
-	if (authorKey.length > 3) {
-		editorKeyFixed = editorKey[0] + " et al.";
+	if (editorKey.length > 3) {
+		editorKeyFixed = (editorKey[0] ?? "") + " et al.";
 	}
 	if (editorKey.length > 0) { return editorKeyFixed }
 
-
+	return "";
 };
 
 
@@ -154,51 +154,52 @@ export const createAuthorKeyFullName = (creators: CreatorArray) => {
 	let editorKeyFixed = "";
 	for (let creatorindex = 0; creatorindex < creators.length; creatorindex++) {
 
-		const creator: Creator = creators[creatorindex]; //select the author
+		const creator = creators[creatorindex]; //select the author
+		if (!creator) continue;
 		if (creator.creatorType === "author") {
-			if (creator.hasOwnProperty("name")) {
+			if (creator.name) {
 				//authorList.push(creator.name)
 				authorKey.push(creator.name);
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				creator.lastName &&
+				creator.firstName
 			) {
 				authorKey.push(creator.lastName + ", " + creator.firstName);
 				authorKeyReverse.push(creator.firstName + " " + creator.lastName);
 
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				!creator.hasOwnProperty("firstName")
+				creator.lastName &&
+				!creator.firstName
 			) {
 				//authorList.push(creator.lastName)
 				authorKey.push(creator.lastName);
 			} else if (
-				!creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				!creator.lastName &&
+				creator.firstName
 			) {
 				//authorList.push(creator.firstName)
 				authorKey.push(creator.firstName);
 			}
 		} else if (creator.creatorType === "editor") {
-			if (creator.hasOwnProperty("name")) {
+			if (creator.name) {
 				//editorList.push(creator.name)
 				editorKey.push(creator.name);
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				creator.lastName &&
+				creator.firstName
 			) {
 				editorKey.push(creator.lastName + ", " + creator.firstName);
 				editorKeyReverse.push(creator.firstName + " " + creator.lastName);
 
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				!creator.hasOwnProperty("firstName")
+				creator.lastName &&
+				!creator.firstName
 			) {
 				//editorList.push(creator.lastName)
 				editorKey.push(creator.lastName);
 			} else if (
-				!creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				!creator.lastName &&
+				creator.firstName
 			) {
 				//editorList.push(creator.firstName)
 				editorKey.push(creator.firstName);
@@ -209,40 +210,40 @@ export const createAuthorKeyFullName = (creators: CreatorArray) => {
 	//Adjust the authorKey depending on the number of authors
 
 	if (authorKey.length == 1) {
-		authorKeyFixed = authorKey[0];
+		authorKeyFixed = authorKey[0] ?? "";
 	}
 	if (authorKey.length == 2) {
-		authorKeyFixed = authorKey[0] + " and " + authorKeyReverse[1];
+		authorKeyFixed = (authorKey[0] ?? "") + " and " + (authorKeyReverse[1] ?? "");
 	}
 
 	if (authorKey.length == 3) {
-		authorKeyFixed = authorKey[0] + ", " + authorKeyReverse[1] + " and " + authorKeyReverse[2];
+		authorKeyFixed = (authorKey[0] ?? "") + ", " + (authorKeyReverse[1] ?? "") + " and " + (authorKeyReverse[2] ?? "");
 	}
 
 	if (authorKey.length > 3) {
-		authorKeyFixed = authorKey[0] + " et al.";
+		authorKeyFixed = (authorKey[0] ?? "") + " et al.";
 	}
 
 	if (authorKey.length > 0) { return authorKeyFixed }
 
 	//If there are no authors (because it is an edited book), then returns the name of the editors
 	if (editorKey.length == 1) {
-		editorKeyFixed = editorKey[0];
+		editorKeyFixed = editorKey[0] ?? "";
 	}
 	if (editorKey.length == 2) {
-		editorKeyFixed = editorKey[0] + " and " + editorKeyReverse[1];
+		editorKeyFixed = (editorKey[0] ?? "") + " and " + (editorKeyReverse[1] ?? "");
 	}
 
 	if (editorKey.length == 3) {
-		editorKeyFixed = editorKey[0] + ", " + editorKeyReverse[1] + " and " + editorKeyReverse[2];
+		editorKeyFixed = (editorKey[0] ?? "") + ", " + (editorKeyReverse[1] ?? "") + " and " + (editorKeyReverse[2] ?? "");
 	}
 
-	if (authorKey.length > 3) {
-		editorKeyFixed = editorKey[0] + " et al.";
+	if (editorKey.length > 3) {
+		editorKeyFixed = (editorKey[0] ?? "") + " et al.";
 	}
 	if (editorKey.length > 0) { return editorKeyFixed }
 
-
+	return "";
 };
 
 
@@ -253,48 +254,49 @@ export const createAuthorKeyInitials = (creators: CreatorArray) => {
 	let editorKeyFixed = "";
 	for (let creatorindex = 0; creatorindex < creators.length; creatorindex++) {
 
-		const creator: Creator = creators[creatorindex]; //select the author
+		const creator = creators[creatorindex]; //select the author
+		if (!creator) continue;
 		if (creator.creatorType === "author") {
-			if (creator.hasOwnProperty("name")) {
+			if (creator.name) {
 				//authorList.push(creator.name)
 				authorKey.push(creator.name);
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				creator.lastName &&
+				creator.firstName
 			) {
 				authorKey.push(creator.lastName + ", " + creator.firstName.substring(0, 1) + ".");
 
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				!creator.hasOwnProperty("firstName")
+				creator.lastName &&
+				!creator.firstName
 			) {
 				//authorList.push(creator.lastName)
 				authorKey.push(creator.lastName);
 			} else if (
-				!creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				!creator.lastName &&
+				creator.firstName
 			) {
 				//authorList.push(creator.firstName)
 				authorKey.push(creator.firstName);
 			}
 		} else if (creator.creatorType === "editor") {
-			if (creator.hasOwnProperty("name")) {
+			if (creator.name) {
 				//editorList.push(creator.name)
 				editorKey.push(creator.name);
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				creator.lastName &&
+				creator.firstName
 			) {
 				editorKey.push(creator.lastName + ", " + creator.firstName.substring(0, 1) + ".");
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				!creator.hasOwnProperty("firstName")
+				creator.lastName &&
+				!creator.firstName
 			) {
 				//editorList.push(creator.lastName)
 				editorKey.push(creator.lastName);
 			} else if (
-				!creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				!creator.lastName &&
+				creator.firstName
 			) {
 				//editorList.push(creator.firstName)
 				editorKey.push(creator.firstName);
@@ -305,52 +307,40 @@ export const createAuthorKeyInitials = (creators: CreatorArray) => {
 	//Adjust the authorKey depending on the number of authors
 
 	if (authorKey.length == 1) {
-		authorKeyFixed = authorKey[0];
+		authorKeyFixed = authorKey[0] ?? "";
 	}
 	if (authorKey.length == 2) {
-		authorKeyFixed = authorKey[0] + " and " + authorKey[1];
+		authorKeyFixed = (authorKey[0] ?? "") + " and " + (authorKey[1] ?? "");
 	}
 
 	if (authorKey.length == 3) {
-		authorKeyFixed = authorKey[0] + ", " + authorKey[1] + " and " + authorKey[2];
+		authorKeyFixed = (authorKey[0] ?? "") + ", " + (authorKey[1] ?? "") + " and " + (authorKey[2] ?? "");
 	}
 
 	if (authorKey.length > 3) {
-		authorKeyFixed = authorKey[0] + " et al.";
+		authorKeyFixed = (authorKey[0] ?? "") + " et al.";
 	}
 	if (authorKey.length > 0) { return authorKeyFixed }
 
 	//If there are no authors (because it is an edited book), then returns the name of the editors
 	if (editorKey.length == 1) {
-		editorKeyFixed = editorKey[0];
+		editorKeyFixed = editorKey[0] ?? "";
 	}
 	if (editorKey.length == 2) {
-		editorKeyFixed = editorKey[0] + " and " + editorKey[1];
+		editorKeyFixed = (editorKey[0] ?? "") + " and " + (editorKey[1] ?? "");
 	}
 
 	if (editorKey.length == 3) {
-		editorKeyFixed = editorKey[0] + ", " + editorKey[1] + " and " + editorKey[2];
+		editorKeyFixed = (editorKey[0] ?? "") + ", " + (editorKey[1] ?? "") + " and " + (editorKey[2] ?? "");
 	}
 
-	if (authorKey.length > 3) {
-		editorKeyFixed = editorKey[0] + " et al.";
+	if (editorKey.length > 3) {
+		editorKeyFixed = (editorKey[0] ?? "") + " et al.";
 	}
 	if (editorKey.length > 0) { return editorKeyFixed }
 
-
+	return "";
 };
-
-export function removeQuoteFromStart(quote: string, annotation: string) {
-	let copy = annotation.slice();
-	while (copy.charAt(0) === quote) copy = copy.substring(1);
-	return copy;
-}
-export function removeQuoteFromEnd(quote: string, annotation: string) {
-	let copy = annotation.slice();
-	while (copy[copy.length - 1] === quote)
-		copy = copy.substring(0, copy.length - 1);
-	return copy;
-}
 
 export function orderByDateModified(a: Reference, b: Reference) {
 	if (a.dateModified > b.dateModified) {
@@ -362,24 +352,24 @@ export function orderByDateModified(a: Reference, b: Reference) {
 	return 0;
 }
 
-export function formatCreatorsName(creator: Creator, nameCustom: string) {
+function formatCreatorsName(creator: Creator, nameCustom: string) {
 	// when the creator only has a name (no first or last name) this works just fine
-	if (creator.hasOwnProperty("name")) {
+	if (creator.name) {
 		nameCustom = creator.name;
 		nameCustom = nameCustom.trim();
 		return nameCustom;
 	} else if (
-		creator.hasOwnProperty("lastName") &&
-		creator.hasOwnProperty("firstName")
+		creator.lastName &&
+		creator.firstName
 	) {
 		nameCustom = nameCustom.replace("{{lastName}}", creator.lastName);
 		nameCustom = nameCustom.replace("{{firstName}}", creator.firstName);
 		const getInitials = function (string: string) {
-			let names = string.split(' '),
-				initials = names[0].substring(0, 1).toUpperCase() + ".";
+			const names = string.split(' ');
+			let initials = (names[0] ?? "").substring(0, 1).toUpperCase() + ".";
 
 			if (names.length > 1) {
-				initials += names[names.length - 1].substring(0, 1).toUpperCase() + ".";
+				initials += (names[names.length - 1] ?? "").substring(0, 1).toUpperCase() + ".";
 			}
 			return initials;
 		};
@@ -388,8 +378,8 @@ export function formatCreatorsName(creator: Creator, nameCustom: string) {
 		nameCustom = nameCustom.trim();
 		return nameCustom;
 	} else if (
-		creator.hasOwnProperty("lastName") &&
-		!creator.hasOwnProperty("firstName")
+		creator.lastName &&
+		!creator.firstName
 	) {
 		nameCustom = nameCustom.replace("{{lastName}}", creator.lastName);
 		nameCustom = nameCustom.replace("; {{firstName}}", creator.firstName);
@@ -398,8 +388,8 @@ export function formatCreatorsName(creator: Creator, nameCustom: string) {
 		nameCustom = nameCustom.trim();
 		return nameCustom;
 	} else if (
-		!creator.hasOwnProperty("lastName") &&
-		creator.hasOwnProperty("firstName")
+		!creator.lastName &&
+		creator.firstName
 	) {
 		nameCustom = nameCustom.replace("; {{lastName}}", creator.firstName);
 		nameCustom = nameCustom.replace(", {{lastName}}", creator.firstName);
@@ -408,6 +398,7 @@ export function formatCreatorsName(creator: Creator, nameCustom: string) {
 		nameCustom = nameCustom.trim();
 		return nameCustom;
 	}
+	return nameCustom;
 }
 
 //Function that create an array with the creators of a given type (e.g. author, editor)
@@ -420,7 +411,8 @@ export const createCreatorList = (
 ) => {
 	const creatorList: string[] = [];
 	for (let creatorindex = 0; creatorindex < creators.length; creatorindex++) {
-		const creator: Creator = creators[creatorindex]; //select the author
+		const creator = creators[creatorindex]; //select the author
+		if (!creator) continue;
 		if (creator.creatorType === typeCreator) {
 			creatorList.push(formatCreatorsName(creator, nameFormat));
 		}
@@ -466,7 +458,8 @@ export const createCreatorAllList = (
 ) => {
 	const creatorList: string[] = [];
 	for (let creatorindex = 0; creatorindex < creators.length; creatorindex++) {
-		const creator: Creator = creators[creatorindex]; //select the author
+		const creator = creators[creatorindex]; //select the author
+		if (!creator) continue;
 		creatorList.push(formatCreatorsName(creator, nameFormat));
 	}
 
@@ -516,7 +509,7 @@ export function replaceMissingFields(
 		// 	run function to determine where we still have double curly brackets
 		for (let j = 0; j < lines.length; j++) {
 
-			if (lines[j].match(TEMPLATE_REG)) {
+			if (lines[j]?.match(TEMPLATE_REG)) {
 				lines.splice(j, 1);
 				j--;
 			}
@@ -559,19 +552,21 @@ export function createLocalFileLink(reference: Reference) {
 		attachmentindex < reference.attachments.length;
 		attachmentindex++
 	) {
-		if (reference.attachments[attachmentindex].itemType !== "attachment")
+		const attachment = reference.attachments[attachmentindex];
+		if (!attachment) continue;
+		if (attachment.itemType !== "attachment")
 			continue;
 
 		//remove white spaces from file name
-		if (reference.attachments[attachmentindex].path == undefined) {
-			reference.attachments[attachmentindex].path = "";
+		if (attachment.path == undefined) {
+			attachment.path = "";
 		}
 
 		const selectedfile: string =
 			"[" +
-			reference.attachments[attachmentindex].title +
+			attachment.title +
 			"](file:///" + // added an extra "/" to make it work on Linux
-			encodeURI(reference.attachments[attachmentindex].path.replaceAll(" ", " ")) +
+			encodeURI(attachment.path.split(" ").join(" ")) +
 			")"; //select the author
 
 
@@ -592,19 +587,21 @@ export function createLocalFilePathLink(reference: Reference) {
 		attachmentindex < reference.attachments.length;
 		attachmentindex++
 	) {
-		if (reference.attachments[attachmentindex].itemType !== "attachment")
+		const attachment = reference.attachments[attachmentindex];
+		if (!attachment) continue;
+		if (attachment.itemType !== "attachment")
 			continue;
 
 		//remove white spaces from file name
-		if (reference.attachments[attachmentindex].select == undefined) {
-			reference.attachments[attachmentindex].select = "";
+		if (attachment.select == undefined) {
+			attachment.select = "";
 		}
 
 		const selectedFilePath: string =
 			"[" +
-			reference.attachments[attachmentindex].title +
+			attachment.title +
 			"](" +
-			encodeURI(reference.attachments[attachmentindex].select) +
+			encodeURI(attachment.select) +
 			")"; //select the author
 
 
@@ -626,19 +623,21 @@ export function createZoteroReaderPathLink(reference: Reference) {
 		attachmentindex < reference.attachments.length;
 		attachmentindex++
 	) {
-		if (reference.attachments[attachmentindex].itemType !== "attachment")
+		const attachment = reference.attachments[attachmentindex];
+		if (!attachment) continue;
+		if (attachment.itemType !== "attachment")
 			continue;
 
 		//remove white spaces from file name
-		if (reference.attachments[attachmentindex].select == undefined) {
-			reference.attachments[attachmentindex].select = "";
+		if (attachment.select == undefined) {
+			attachment.select = "";
 		}
 
 		const selectedFilePath: string =
 			"[" +
-			reference.attachments[attachmentindex].title +
+			attachment.title +
 			"](" +
-			encodeURI(reference.attachments[attachmentindex].select).replace(
+			encodeURI(attachment.select).replace(
 				"select",
 				"open-pdf"
 			) + ")"; //select the author
@@ -679,14 +678,7 @@ export function createNoteTitle(
 	//Remove special characters from the name of the file
 	exportTitle = exportTitle.replace(/[/\\?%*:|"<>]/g, "");
 
-	//Get the path of the vault
-	const vaultPath = this.app.vault.adapter.getBasePath();
-
-	const exportPathFull = path.normalize(
-		vaultPath + "/" + exportPath + "/" + exportTitle + ".md"
-	);
-
-	return exportPathFull;
+	return normalizePath(exportPath + "/" + exportTitle + ".md");
 }
 
 export function replaceTagList(
@@ -703,7 +695,10 @@ export function replaceTagList(
 			indexTag < selectedEntry.tags.length;
 			indexTag++
 		) {
-			selectedEntry.zoteroTags.push(selectedEntry.tags[indexTag].tag);
+			const tagEntry = selectedEntry.tags[indexTag];
+			if (tagEntry) {
+				selectedEntry.zoteroTags.push(tagEntry.tag);
+			}
 		}
 	}
 
@@ -835,28 +830,19 @@ export function replaceTagList(
 }
 
 export function openSelectedNote(
+	app: App,
 	selectedEntry: Reference,
 	exportTitle: string,
 	exportPath: string
 ) {
-	const noteTitleFull = createNoteTitle(
+	const noteTitle = createNoteTitle(
 		selectedEntry,
 		exportTitle,
 		exportPath
-		//this.zoteroBuildWindows
 	);
 
-	//remove from the path of the note to be exported the path of the vault
-	const noteTitleShort = noteTitleFull.replace(
-		normalizePath(this.app.vault.adapter.getBasePath()) + "/",
-		""
-	);
-
-	//Find the TFile
-	const myFile = this.app.vault.getAbstractFileByPath(noteTitleShort);
-
-	//Open the Note ina new leaf
-	this.app.workspace.getUnpinnedLeaf().openFile(myFile);
+	//Open the Note in a new leaf
+	app.workspace.openLinkText(noteTitle, "", true);
 }
 
 export function parseCiteKeyFromNoteName(noteName:string, format:string) {
@@ -868,10 +854,12 @@ export function parseCiteKeyFromNoteName(noteName:string, format:string) {
 		// then regExp = '@(s*[a-zA-Z0-9]+s*).md'
 		// works if format = '{{citekey}}.md' or '@{{citekey}}-{{title}}.md'
 		// formats like '@{{citekey}}{{title}}' won't work
+		const idx = match.index ?? 0;
 		const regExp = format.substring(
-			match.index != 0 ? match.index - 1 : match.index, 
-			match.index + match[0].length + 1)
+			idx != 0 ? idx - 1 : idx, 
+			idx + match[0].length + 1)
 			.replace("{{citeKey}}", "(s*[a-zA-Z0-9]+s*)");
-		return noteName.match(regExp)[1];
+		return noteName.match(regExp)?.[1];
 	}
+	return undefined;
 }

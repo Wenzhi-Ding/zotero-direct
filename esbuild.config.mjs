@@ -17,7 +17,7 @@ const buildOptions = {
 	},
 	entryPoints: ['src/main.ts'],
 	bundle: true,
-	external: ['obsidian', 'electron', ...builtins],
+	external: ['obsidian', 'electron', 'sql.js', ...builtins, ...builtins.map(m => `node:${m}`)],
 	format: 'cjs',
 	target: 'es2016',
 	logLevel: "info",

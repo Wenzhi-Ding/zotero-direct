@@ -1,62 +1,95 @@
-# Important: this plugin is no longer in development
+# Zotero Direct
 
-# BibNotes Formatter (for Zotero)
+[中文文档](./README.zh.md) | English
 
-This plugin generates literaure notes from the source stored in your Zotero library, including both the metadata and the annotations that are stored within Zotero (extracted using the native PDF Reader or the Zotfile plugin). The settings of the plugin provide different tools to customize the format of the literature notes, as well as to perform different transformations to the text of the annotations.
+> This is a **personalized fork** based on [stefanopagliari/bibnotes](https://github.com/stefanopagliari/bibnotes).
+
+## Design Philosophy
+
+The goal of this version is to simplify the original plugin, reduce configuration complexity, and let users focus more on the content itself:
+
+- **Simplified Logic**: Removed complex highlight/annotation import features, keeping only metadata import
+- **Reduced Configuration**: No need to install or configure Zotero plugins; directly reads the Zotero database
+- **Human in the loop**: Encourages users to actively read and think, manually organize notes rather than auto-importing all annotations
+
+---
+
+This plugin generates literature notes from your Zotero library, importing only **metadata** (title, author, abstract, etc.), excluding PDF highlights, annotations, or images.
 
 ![](/images/ExampleNote.jpg)
 
 ## Installation
 
-The plugin is currently not not registered as a standard community plugin for downloading or updating within Obsidian. In order to install, you need to clone or unzip the latest release into your vault's .obsidian/plugins/ directory, then enabled in the Obsidian configuration.
+This plugin is published on Obsidian Community Plugins. You can install it directly in Obsidian:
 
-An alternative if you have the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat/) installed: use `stefanopagliari/bibnotes` to add BibNotes Formatter as a Beta plugin, then enable it in the Community plugins tab.
+1. Open Obsidian Settings → Community Plugins
+2. Browse community plugins, search for "Zotero Direct"
+3. Click Install and Enable
 
-## Importing your Zotero Library into Obsidian
+Or manually install: Download the latest release, extract to your vault's `.obsidian/plugins/` directory, then enable in Obsidian settings.
 
-In order to import your references and notes from Zotero, you need to export your library as a "BetterBibTex JSON" format and save this file inside your vualt. To do to follow these steps:
+## Importing your Zotero Library
 
-- install within Zotero the plugin ["Better BibTex for Zotero"](https://retorque.re/zotero-better-bibtex/installation/). For more information on how to install the plugin see the instructions on the [website of the plugin](https://retorque.re/zotero-better-bibtex/installation/).
-- in the main menu of Zotero go to File > Export Library (to export the entire library). It is also possible to to export a specific collection or group of references by selecting these, right-click, and then selecting "export collection" (in the case of a folder) or "export items" (in the case of a collection of references.
-- select the export format "**BetterBibTex Json**".
-- select "Export Notes" if you would like to import into Obsidian the annotation.
-- *(Optional)* select "Keep updated" to automatically update the exported library once an entry is added/deleted/amended
-- save the BetterBibTex JSON file in a folder **within** your Obsidian Vault
-- in the plugin settings within Obsidian add the relative path within your vault of the library to be imported, as well as the relative path within your vault of the folder where you would like the literature notes to be stored. For instance, add `library.json` if the file (library.json) is in the root folder. Instead, if the file is in a subfolder, specify first the subfolder followed by the name of the file (e.g. 'zotero/library.json' if the json file is located in a subfolder of your vault called 'zotero'.
+This plugin **reads the Zotero database directly**, no need to export JSON files or install Zotero plugins.
 
-![](/images/Export_Zotero.jpg)
+### Configuration Steps
+
+1. In plugin settings, configure your **Zotero database path**:
+   - Windows: `C:\Users\<username>\Zotero\zotero.sqlite`
+   - macOS: `~/Library/Application Support/Zotero/Profiles/<random>/zotero.sqlite`
+   - Linux: `~/.zotero/zotero/<random>/zotero.sqlite`
+
+2. Set the **Export Path** for literature notes: specify a folder in your Obsidian vault (e.g., `Literature Notes`)
+
+3. (Optional) Configure other template and formatting options
+
+> **Tip**: The plugin automatically reads your Zotero database to get the latest literature info. When you add, modify, or delete items in Zotero, just run the update command in Obsidian to sync.
 
 ## Commands
 
-The plugin introduces two commands into Obsidian:
+The plugin provides two commands:
 
-- **Create/Update Literature Note**: when you select this command you will be prompted to chose one of references from the library you have imported. If the reference has not been imported yet in the specified folder, a new note will be generated. If a note already exists, its content will be updated wi
-
-thout over-writing the existing annotation (e.g. comments added manually from within Obsidian and block-references will not be over-written). The first option ("Entire Library") can be selected to create/update all the notes from the imported library.
+- **Create/Update Literature Note**: After selecting this command, you can choose a reference from your Zotero library. If the reference hasn't been imported yet, a new note will be generated; if it already exists, the note content will be updated (without overwriting annotations you manually added in Obsidian). The first option ("Entire Library") can be used to create/update notes for all references in the library.
 
 ![](/images/SelectCommandExample.png)
 
-- **Update Library**: when you select this command, the plugin will generate/update all the notes that have been modified from Zotero since the last time the same command was selected. If this is the first time that you select this command, then the plugin will create/update literature notes for all the entries in the imported bibliography.
+- **Update Library**: After selecting this command, the plugin will generate/update all notes that have been modified in Zotero since the last time this command was run.
 
-## Create Literature Notes
+## Creating Literature Notes
 
-By default the plugin will export both the metadata and the notes stored in Zotero for the selected reference. Both can be deselected in the plugin settings. The main configurations related to the format of the notes are the following:
+This version **only exports reference metadata**, excluding the following:
+- PDF highlights and annotations ({{PDFNotes}}, {{Yellow}}, {{Red}}, etc.)
+- Manually created notes in Zotero ({{UserNotes}})
+- Images extracted from PDF ({{Images}})
 
-- **Export Path**: in the plugin settings, add the relative folder within your Obsidian vault where the literature notes will be stored. In the field is left empty, the notes will be exported in the main folder.
-- **Note Title**: In the plugin setting you can specify the format of the note title. Possible values include:
-  - {{citeKey}},
-  - {{title}},
-  - {{author}},
+### Why remove these features?
+
+This aligns with the **"Human in the loop"** philosophy:
+- **Avoid Information Overload**: Auto-importing all highlights often produces large amounts of low-value information
+- **Active Reading**: We encourage you to actively read and think, manually organize what truly matters
+- **Stay Simple**: Simpler plugin logic, easier configuration, more focused usage
+
+If you need full annotation import features, we recommend using the original [stefanopagliari/bibnotes](https://github.com/stefanopagliari/bibnotes).
+
+---
+
+### Available Configuration Options:
+
+- **Export Path**: In plugin settings, add the relative folder path within your Obsidian vault where literature notes will be stored. If left empty, notes will be exported to the main folder.
+- **Note Title**: In plugin settings, you can specify the format of the note title. Possible values include:
+  - {{citeKey}}
+  - {{title}}
+  - {{author}}
   - {{year}}
-- **Template**: It is possible to select among two existing templates (one presenting the metadata as a simple list and the other wrapping the information into boxes using the Admonition plugin) or to or provide a custom template (see below).
-- **Fields**: It is possible to include in your custom template all the fields found in the Better Bibtex json file, as well as additional ones created by the plugin. These include:
+- **Template**: You can choose between two existing templates (one presenting metadata as a simple list, the other wrapping information in boxes using the Admonition plugin) or provide a custom template (see below).
+- **Fields**: You can include all fields found in the Zotero database in your custom template, as well as additional ones created by the plugin. These include:
   - {{title}}
   - {{shortTitle}}
   - {{citeKey}} or {{citationKey}}
   - {{itemType}}
   - {{author}}
   - {{editor}}
-  - {{creator}}: all the individual listed as creators, including authors, editors, etc...
+  - {{creator}}: all individuals listed as creators, including authors, editors, etc.
   - {{translator}}
   - {{publisher}}
   - {{place}}
@@ -77,77 +110,23 @@ By default the plugin will export both the metadata and the notes stored in Zote
   - {{uri}}: link to the entry on the Zotero website
   - {{eprint}}
   - {{file}}: local path of the file attached to the entry
-  - {{filePath}}: links to the attachments associated with this entry within zotero (without opening the reader).
-  - "{{zoteroReaderLink}}": links to open the specific attachment within the Zotero reader. This is different from {{file}} that opens the attachment in an external reader
-  - {{localLibrary}}: link to the entry on the Zotero app
-  - {{select}}: link to the attachment on the Zotero app
-  - {{keywordsZotero}}: tags found in the metadata of the entry
+  - {{filePath}}: links to attachments associated with this entry within Zotero (without opening the reader)
+  - "{{zoteroReaderLink}}": links to open the specific attachment within the Zotero reader. This is different from {{file}} which opens the attachment in an external reader
+  - {{localLibrary}}: link to the entry in the Zotero app
+  - {{select}}: link to the attachment in the Zotero app
+  - {{keywordsZotero}}: tags found in the entry metadata
   - {{keywordsPDF}}: tags extracted from the PDF
-  - {{keywords}}, {{keywordsAll}}: both tags found in the metadata of the entry and tags extracted from the PDF
+  - {{keywords}}, {{keywordsAll}}: both tags found in entry metadata and tags extracted from PDF
   - {{collections}}: collections/folders where the entry is located
-  - {{collectionsParent}}: collections/folders where the entry is located, plus the parent folders to these
-  - {{PDFNotes}}: all the highlights, comments, and images extracted from the PDF, in the order in which they appear
-  - {{Yellow}, {{Red}}, {{Green}}, {{Black}, {{White}}, {{Gray}}, {{Cyan}}, {{Magenta}}, {{Orange}}: all the highlights of a certain colour
-  - {{UserNotes}}: notes manually created within Zotero
-  - {{Images}}: all the images extracted via the Zotero PDF Reader
+  - {{collectionsParent}}: collections/folders where the entry is located, plus parent folders
 
-- It is also possible to wrap the placeholders into [[ ]] in order to create notes or to preface them with a tag(#). You can also preface a field with :: in order to create Dataview fields.
-- **Missing Fields**: Fields that are present in the template but missing in the entry are deleted by default. This can be changed in the settings.
+- You can also wrap placeholders in [[ ]] to create notes or preface them with a tag (#). You can also preface a field with :: to create Dataview fields.
+- **Missing Fields**: Fields present in the template but missing in the entry are deleted by default. This can be changed in settings.
 
-## Basic Formatting
+## Updating Existing Notes
 
-In the settings of the plugin, it is possible to select the formatting of the **highlights** and **comments** extracted from the text. These include:
+If updating an existing note, you can decide in plugin settings:
 
-- **Double Space**
-- **Italic**
-- **Bold**
-- **Quotation Marks**
-- **Highlight**
-- **Bullet Points**
-- **Blockquote**
-- **Custom text before or after all highlights**
-- **Custom text before or after all comments**
-
-## Additional Highlight Formatting
-
-It is possible to perform additional transformations to designated highlighted sentences. The transformations currently included in the plugin are:
-
-- **Heading**: Turn highlighted text into a heading (Level 1 to 6).
-
-![](/images/exampleHeading.png)
-
-- **MergeAbove**: Append highlight to the previous one (e.g. to merge paragraph across two pages).
-
-![](/images/exampleMergeAbove.jpg)
-
-- **Preprend Comment**: Place the text of the comment at the beginning of the highlight (rather than at the end as by default).
-
-![](/images/exampleCommentPrepend.jpg)
-
-- **Keyword**: Add the highlighted text to the list of keywords listed under the ({{keywords}}) placeholder in the template.
-
-![](/images/exampleKeyword.png)
-
-- **Todo**: Transform the highlight or comments into a task ("- [ ]").
-![](/images/exampleToDo.png)
-
-- **Custom Text**: Add custom text before or after a specific highlight
-
-### Keywords
-
-Transformations can be triggered by adding a dedicated "keyword" at the beginning of the comment to the specific highlight. This can be a single character (e.g. #) or a single word (e.g. todo). When this character/word is found at the beginning of a comment, the text of the comment or the highlighted text will be reformatted. The keywords can be defined in the settings of the plugin
-
-### Highlight Colour
-
-In addition to using dedicated keywords at the beginning of a comment, it is possible to apply specific styling or transformations to highlights based on the colour of the highlight. The plugin recognize the highlight colour extracted by:
-
-- **Zotero** native reader (yellow, red, green, blue, purple)
-- **Zotfile** plugin (black, white, gray, red,orange, yellow, green, cyan, blue, magenta). In order to export the highlight colour you will need to activate this function by going to the main menu of Zoter and selecting Preferences --> Advanced --> Config Editor. Search for "extensions.zotfile.pdfExtraction.colorAnnotations" and turn the value to "true". It is also important that the value "extensions.zotfile.pdfExtraction.colorCategories" is restored to the default value.
-
-### Updating Existing Notes
-
-In the case you are updating an existing note, you can decide in the plugin settings whether to
-
-- over-write the existing note completely ("Overwrite Entire Note")
-- preserve the existing note and only add new sentences that were not included in the existing note ("Save Entire Note")  
-- preserve the existing note and add non-overlapping sentences only in a specific section, while over-writing the rest ("Select Section"). When the "Select Section" is chosen, the plugin will ask for a string identifying the beginning and/or end of the section to be updated (rather than overwritten). If the "start" field is left empty, the existing text will be preserved from to the beginning of the note. If the "end" field is left empty, the existing text will be preserved until  the end of the note. For instance, in order to over-write the metadata but maintain changes made manually to the extracted annotations, the start of the section to be preserved should be set to the unique title used in the template before the metadata (e.g. "## Extracted Annotations").
+- Overwrite the existing note completely ("Overwrite Entire Note")
+- Preserve the existing note and only add new sentences not included ("Save Entire Note")
+- Preserve the existing note and add non-overlapping sentences only in a specific section, while overwriting the rest ("Select Section"). When "Select Section" is chosen, the plugin will ask for a string identifying the beginning and/or end of the section to be updated (rather than overwritten). If the "start" field is left empty, existing text is preserved from the beginning of the note. If the "end" field is left empty, existing text is preserved until the end of the note. For example, to overwrite metadata but preserve manual changes to notes, set the start of the section to be preserved to the unique title used before the metadata in your template.

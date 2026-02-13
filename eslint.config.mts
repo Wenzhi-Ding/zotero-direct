@@ -1,10 +1,11 @@
-import tseslint from 'typescript-eslint';
+import tseslint, { type ConfigWithExtends } from 'typescript-eslint';
 import obsidianmd from "eslint-plugin-obsidianmd";
 import globals from "globals";
 import { globalIgnores } from "eslint/config";
 
 export default tseslint.config(
 	{
+		files: ['src/**/*.ts'],
 		languageOptions: {
 			globals: {
 				...globals.browser,
@@ -21,7 +22,12 @@ export default tseslint.config(
 			},
 		},
 	},
-	...obsidianmd.configs.recommended,
+	...tseslint.configs.recommended,
+	{
+		files: ['src/**/*.ts'],
+		plugins: { obsidianmd },
+		rules: (obsidianmd.configs?.recommended ?? {}) as NonNullable<ConfigWithExtends["rules"]>,
+	},
 	globalIgnores([
 		"node_modules",
 		"dist",
@@ -30,5 +36,6 @@ export default tseslint.config(
 		"version-bump.mjs",
 		"versions.json",
 		"main.js",
+		"sql-wasm.js",
 	]),
 );

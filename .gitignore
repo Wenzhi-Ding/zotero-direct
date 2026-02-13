@@ -14,3 +14,7 @@ package-lock.json
 
 # obsidian
 data.json
+
+# Build output
+main.js
+release/

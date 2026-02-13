@@ -17,6 +17,8 @@
 		"strictBindCallApply": true,
 		"allowSyntheticDefaultImports": true,
 		"useUnknownInCatchVariables": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
 		"lib": [
 			"DOM",
 			"ES5",

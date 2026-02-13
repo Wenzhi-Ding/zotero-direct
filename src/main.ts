@@ -1,7 +1,4 @@
-// Import fs
-import * as fs from "fs";
-
-import { Plugin, Notice } from "obsidian";
+import { Plugin, Notice, FileSystemAdapter, TFile, normalizePath } from "obsidian";
 
 import 'turndown'
 
@@ -11,16 +8,20 @@ import {
 	templatePlain,
 } from "./constants";
 
+import { t } from "./i18n";
+
 //Import modals from /modal.ts
-import { fuzzySelectEntryFromJson, updateLibrary } from "./modal";
+import { SelectReferenceModal, UpdateLibraryModal } from "./modal";
 
 //Import sample settings from /settings.ts
 import { SettingTab } from "./settings";
 import {
-	MyPluginSettings,
+	ZoteroDirectSettings,
 	Reference,
 	Collection,
 } from "./types";
+
+import { readZoteroDatabase } from "./zotero-db";
 
 import {
 	createAuthorKey,
@@ -42,8 +43,8 @@ import {
 	parseCiteKeyFromNoteName,
 } from "./utils";
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class ZoteroDirectPlugin extends Plugin {
+	settings: ZoteroDirectSettings;
 
 	async onload() {
 		await this.loadSettings();
@@ -54,25 +55,25 @@ export default class MyPlugin extends Plugin {
 		//Add Command to Select a single Entry from Bib file via SQL
 		this.addCommand({
 			id: "importSelectedJson-modal",
-			name: "Create/Update Literature Note",
+			name: t().cmdCreateUpdateNote,
 			callback: () => {
-				new fuzzySelectEntryFromJson(this.app, this).open();
+				new SelectReferenceModal(this.app, this).open();
 			},
 		});
 
 		//Add Command to Select a single Entry from Bib file via SQL
 		this.addCommand({
 			id: "updateLibrary-modal",
-			name: "Update Library",
+			name: t().cmdUpdateLibrary,
 			callback: () => {
-				new updateLibrary(this.app, this).open();
+				new UpdateLibraryModal(this.app, this).open();
 			},
 		});
 
 		//Add Command to Update the current active note
 		this.addCommand({
 			id: "updateCurrentNote",
-			name: "Update Current Note",
+			name: t().cmdUpdateCurrentNote,
 			callback: () => {
 				this.updateCurrentNote();
 			},
@@ -127,9 +128,11 @@ export default class MyPlugin extends Plugin {
 			this.settings.nameFormat
 		);
 
-		//Create field year
-		if (selectedEntry.hasOwnProperty("date")) {
-			selectedEntry.year = selectedEntry.date.match(/\d\d\d\d/gm) + "";
+		//Create field year from date or dateEnacted
+		if (selectedEntry.hasOwnProperty("date") && selectedEntry.date) {
+			selectedEntry.year = selectedEntry.date.match(/\d{4}/)?.[0] || "";
+		} else if (selectedEntry.hasOwnProperty("dateEnacted") && selectedEntry.dateEnacted) {
+			selectedEntry.year = selectedEntry.dateEnacted.match(/\d{4}/)?.[0] || "";
 		}
 		//Create field ZoteroLocalLibrary
 		if (selectedEntry.hasOwnProperty("select")) {
@@ -181,9 +184,7 @@ export default class MyPlugin extends Plugin {
 		if (selectedEntry.itemType == "Journal Article") {
 			selectedEntry.citationShort = selectedEntry.citationInLine +
 				" " +
-				"'" +
-				selectedEntry.title +
-				"'";
+				selectedEntry.title;
 			selectedEntry.citationFull = selectedEntry.citationShort +
 				", " +
 				"*" +
@@ -210,9 +211,9 @@ export default class MyPlugin extends Plugin {
 		//create field path field
 		selectedEntry.filePath = createLocalFilePathLink(selectedEntry);
 		//create Zotero reader path field
-		console.log(selectedEntry.filePath)
+		if (this.settings.debugMode) console.log("[BibNotes] filePath:", selectedEntry.filePath);
 		selectedEntry.zoteroReaderLink = createZoteroReaderPathLink(selectedEntry);
-		console.log(selectedEntry.zoteroReaderLink)
+		if (this.settings.debugMode) console.log("[BibNotes] zoteroReaderLink:", selectedEntry.zoteroReaderLink);
 
 
 
@@ -226,9 +227,7 @@ export default class MyPlugin extends Plugin {
 
 
 		//remove single backticks but retain triple backticks
-		note = note.replace(/```/g, "HEREISAPLACEHOLDERFORBACKTICK");
-		note = note.replace(/`/g, "'");
-		note = note.replace(/HEREISAPLACEHOLDERFORBACKTICK/g, "```");
+		note = note.replace(/(?<!`)`(?!`)/g, "'");
 
 		// //if the abstract is missing, delete Abstract headings
 
@@ -251,11 +250,11 @@ export default class MyPlugin extends Plugin {
 
 	parseCollection(
 		selectedEntry: Reference,
-		data: { collections: Collection[] },
+		data: { collections: Record<string, Collection> | Collection[] },
 		metadata: string
 	) {
 		//Create object with all the collections
-		const exportedCollections: Collection[] = data.collections;
+		const exportedCollections = data.collections as unknown as Record<string, Collection>;
 
 		//identify the ID of the item
 		const selectedID = selectedEntry.itemID;
@@ -277,13 +276,17 @@ export default class MyPlugin extends Plugin {
 			indexCollection < collectionKeys.length;
 			indexCollection++
 		) {
+			const key = collectionKeys[indexCollection];
+			if (!key) continue;
+			const col = exportedCollections[key];
+			if (!col) continue;
 			const collectionName =
-				exportedCollections[collectionKeys[indexCollection]].name;
+				col.name;
 			const collectionItem =
-				exportedCollections[collectionKeys[indexCollection]].items;
+				col.items;
 			const collectionParent =
-				exportedCollections[collectionKeys[indexCollection]].parent;
-			if (collectionItem.includes(selectedID)) {
+				col.parent;
+			if (collectionItem.includes(String(selectedID))) {
 				collectionArray.push(collectionName);
 				collectionParentCode.push(collectionParent);
 			}
@@ -296,13 +299,17 @@ export default class MyPlugin extends Plugin {
 				indexCollection < collectionKeys.length;
 				indexCollection++
 			) {
+				const key = collectionKeys[indexCollection];
+				if (!key) continue;
+				const col = exportedCollections[key];
+				if (!col) continue;
 				if (
 					collectionParentCode.includes(
-						exportedCollections[collectionKeys[indexCollection]].key
+						col.key
 					)
 				) {
 					collectionParentArray.push(
-						exportedCollections[collectionKeys[indexCollection]]
+						col
 							.name
 					);
 				}
@@ -316,13 +323,17 @@ export default class MyPlugin extends Plugin {
 				indexCollection < collectionKeys.length;
 				indexCollection++
 			) {
+				const key = collectionKeys[indexCollection];
+				if (!key) continue;
+				const col = exportedCollections[key];
+				if (!col) continue;
 				if (
 					collectionParentParent.includes(
-						exportedCollections[collectionKeys[indexCollection]].key
+						col.key
 					)
 				) {
 					collectionParentArray.push(
-						exportedCollections[collectionKeys[indexCollection]]
+						col
 							.name
 					);
 				}
@@ -426,7 +437,7 @@ export default class MyPlugin extends Plugin {
 		existingNote: string,
 		newNote: string,
 		authorKey: string
-	) {
+	): string {
 		//Find the position of the line breaks in the old note
 		const newLineRegex = RegExp(/\n/gm);
 		const positionNewLine: number[] = [];
@@ -466,6 +477,7 @@ export default class MyPlugin extends Plugin {
 
 			//Remove formatting added by bibnotes at the beginning of the line
 			let selectedNewLine = newNoteArray[indexLines];
+			if (selectedNewLine === undefined) continue;
 			selectedNewLine = selectedNewLine.trim();
 			selectedNewLine = selectedNewLine.replace(/^- /gm, "");
 			selectedNewLine = selectedNewLine.replace(/^> /gm, "");
@@ -554,9 +566,9 @@ export default class MyPlugin extends Plugin {
 			// if a match if not found with the old note, set foundOld to FALSE and set positionOld to the position in the old note where the line break is found
 			if (Math.max(...positionArray) === -1) {
 				const positionOldNoteMax = Math.max(...positionOldNote);
-				newNoteInsertText.push(newNoteArray[indexLines]);
+				newNoteInsertText.push(newNoteArray[indexLines] ?? "");
 				newNoteInsertPosition.push(
-					positionNewLine.filter((pos) => pos > positionOldNoteMax)[0]
+					positionNewLine.filter((pos) => pos > positionOldNoteMax)[0] ?? 0
 				);
 			}
 		}
@@ -646,12 +658,13 @@ export default class MyPlugin extends Plugin {
 
 			return newNoteCombined;
 		}
+		return existingNote;
 	}
 
-	createNote(
+	async createNote(
 		selectedEntry: Reference,
 		data: {
-			collections: Record<string, never> | Collection[];
+			collections: Record<string, Collection> | Collection[];
 			config?: Record<string, never>;
 			items?: Reference[];
 			version?: string;
@@ -660,24 +673,24 @@ export default class MyPlugin extends Plugin {
 		//Extract the reference within bracket to faciliate comparison
 		const authorKey = createAuthorKey(selectedEntry.creators);
 		//set the authorkey field (with or without first name) on the entry to use when creating the title and to replace in the template
-		selectedEntry.authorKey = authorKey;
-		selectedEntry.authorKeyInitials = createAuthorKeyInitials(selectedEntry.creators)
-		selectedEntry.authorKeyFullName = createAuthorKeyFullName(selectedEntry.creators)
+		selectedEntry.authorKey = authorKey ?? "";
+		selectedEntry.authorKeyInitials = createAuthorKeyInitials(selectedEntry.creators) ?? ""
+		selectedEntry.authorKeyFullName = createAuthorKeyFullName(selectedEntry.creators) ?? ""
 
 		//Load Template
 		const templateNote = this.importTemplate();
-		bugout.log("Template: \n" + templateNote);
+		if (this.settings.debugMode) console.log("[BibNotes] Template:", templateNote);
 
 		//Create the metadata
 		let litnote: string = this.parseMetadata(selectedEntry, templateNote);
-		bugout.log(selectedEntry);
+		if (this.settings.debugMode) console.log("[BibNotes] Entry:", selectedEntry);
 
 		//Extract the list of collections
 		litnote = this.parseCollection(selectedEntry, data, litnote);
 
 
-		//Define the name and full path of the file to be exported
-		const noteTitleFull = createNoteTitle(
+		//Define the name and path of the file to be exported (vault-relative)
+		const noteRelPath = createNoteTitle(
 			selectedEntry,
 			this.settings.exportTitle,
 			this.settings.exportPath
@@ -698,52 +711,73 @@ export default class MyPlugin extends Plugin {
 			this.settings.missingfieldreplacement
 		);
 		// Compare old note and new note
+		const existingFile = this.app.vault.getAbstractFileByPath(noteRelPath);
 		if (
 			this.settings.saveManualEdits !== "Overwrite Entire Note" &&
-			fs.existsSync(noteTitleFull)
+			existingFile instanceof TFile
 		) {
 			//Check if the settings in settings.saveManualEdits are TRUE. In that case compare existing file with new notes. If false don't look at existing note
 			//Check if an old version exists. If the old version has annotations then add the new annotation to the old annotaiton
 
-			const existingNoteAll = String(fs.readFileSync(noteTitleFull));
+			const existingNoteAll = await this.app.vault.read(existingFile);
 
 
 			litnote = this.compareOldNewNote(
 				existingNoteAll,
 				litnote,
-				authorKey
+				authorKey ?? ""
 			);
 		}
 
 		//Export the file
-		bugout.log("NoteTitleFull: " + noteTitleFull);
-		bugout.log("Final Note: " + litnote);
-		bugout.log(this.settings);
-		if (this.settings.debugMode === true) {
-			bugout.downloadLog();
+		if (this.settings.debugMode) {
+			console.log("[BibNotes] NoteRelPath:", noteRelPath);
+			console.log("[BibNotes] Final Note:", litnote);
 		}
-		fs.writeFile(noteTitleFull, litnote, function (err) {
-			if (err) console.log(err);
-		});
-		new Notice(`Imported ${selectedEntry.citationKey}!`);
+		if (existingFile instanceof TFile) {
+			await this.app.vault.modify(existingFile, litnote);
+		} else {
+			// Ensure parent folder exists
+			const folderPath = normalizePath(this.settings.exportPath);
+			if (folderPath && !(await this.app.vault.adapter.exists(folderPath))) {
+				await this.app.vault.createFolder(folderPath);
+			}
+			await this.app.vault.create(noteRelPath, litnote);
+		}
+		new Notice(t().noticeImported(selectedEntry.citationKey));
 	}
 
-	updateCurrentNote(){
-		console.log("Updating Current Note");
+	async updateCurrentNote(){
+		if (this.settings.debugMode) console.log("[BibNotes] Updating Current Note");
 
-		// Check if the json file exists
-		const jsonPath = this.app.vault.adapter.getBasePath() + "/" + this.settings.bibPath
-		if (!fs.existsSync(jsonPath)) { new Notice("No BetterBibTex Json file found at " + jsonPath) }
+		// Check if the database path is set
+		const dbPath = this.settings.zoteroDbPath;
+		if (!dbPath) {
+			new Notice(t().noticeDbNotConfigured);
+			return;
+		}
 
-		const rawdata = fs.readFileSync(
-			this.app.vault.adapter.getBasePath() +
-			"/" +
-			this.settings.bibPath
-		);
-		const data = JSON.parse(rawdata.toString()); // rawdata is a buffer, converted to strin
+		let data;
+		// 获取插件目录的绝对路径
+		const vaultBasePath = this.app.vault.adapter instanceof FileSystemAdapter ? this.app.vault.adapter.getBasePath() : "";
+		const pluginDir = vaultBasePath && this.manifest.dir 
+			? vaultBasePath + "/" + this.manifest.dir 
+			: this.manifest.dir || "";
+		try {
+			data = await readZoteroDatabase(dbPath, pluginDir);
+		} catch (e) {
+			new Notice(t().noticeDbReadFailed + (e as Error).message);
+			console.error(e);
+			return;
+		}
 
 		// Find the citeKey of current note in file name
-		const currentNoteName = this.app.workspace.getActiveFile().name
+		const activeFile = this.app.workspace.getActiveFile();
+		if (!activeFile) {
+			new Notice(t().noticeCurrentNoteNotFound(""));
+			return;
+		}
+		const currentNoteName = activeFile.name
 		const noteTitleFormat = this.settings.exportTitle+'.md'
 
 		const citeKey = parseCiteKeyFromNoteName(currentNoteName, noteTitleFormat);
@@ -757,15 +791,19 @@ export default class MyPlugin extends Plugin {
 			);
 			if (entryIndex!=-1){
 				// update current note
-				const currentEntry:Reference = data.items[entryIndex]
-				this.createNote(currentEntry, data);
-				new Notice("Current Note " + currentNoteName + " updated");
+				const currentEntry = data.items[entryIndex];
+			if (!currentEntry) {
+				new Notice(t().noticeCurrentNoteNotFound(currentNoteName));
+				return;
+			}
+				await this.createNote(currentEntry, data);
+				new Notice(t().noticeCurrentNoteUpdated(currentNoteName));
 			}
 			else{
-				new Notice("Current Note " + currentNoteName + " not found in the library");
+				new Notice(t().noticeCurrentNoteNotFound(currentNoteName));
 			}
 		}else{
-			new Notice("Cannot find citeKey from Current Note:" + currentNoteName);
+			new Notice(t().noticeCiteKeyNotFound(currentNoteName));
 		}
 	}
 }

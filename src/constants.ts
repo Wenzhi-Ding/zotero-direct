@@ -1,4 +1,4 @@
-import { MyPluginSettings } from "./types";
+import { ZoteroDirectSettings } from "./types";
 
 export const templatePlain = "# {{title}}\n" +
 	"\n" +
@@ -104,8 +104,8 @@ export const templateAdmonition = "# {{title}}\n" +
 	"{{PDFNotes}}"
 
 
-export const DEFAULT_SETTINGS: MyPluginSettings = {
-	bibPath: "",
+export const DEFAULT_SETTINGS: ZoteroDirectSettings = {
+	zoteroDbPath: "",
 	templateContent: templatePlain,
 	templateType: "Admonition",
 	lastUpdateDate: new Date('1995-12-17T03:24:00'),
