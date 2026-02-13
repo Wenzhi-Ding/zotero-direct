@@ -16,7 +16,7 @@ The goal of this version is to simplify the original plugin, reduce configuratio
 
 This plugin generates literature notes from your Zotero library, importing only **metadata** (title, author, abstract, etc.), excluding PDF highlights, annotations, or images.
 
-![](/images/ExampleNote.jpg)
+![](/images/ExampleNote.png)
 
 ## Installation
 

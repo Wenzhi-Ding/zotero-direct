@@ -14,7 +14,7 @@
 
 本插件从您的 Zotero 库中生成文献笔记，仅导入文献的**元数据**（标题、作者、摘要等），不包含 PDF 高亮、注释或图片。
 
-![](/images/ExampleNote.jpg)
+![](/images/ExampleNote.png)
 
 ## 安装
 
@@ -109,7 +109,7 @@
   - {{eprint}}
   - {{file}}: 附加到该条目的文件的本地路径
   - {{filePath}}: 链接到 Zotero 中与此条目关联的附件（不打开阅读器）
-  - "{{zoteroReaderLink}}": 链接以在 Zotero 阅读器中打开特定附件。这与 {{file}} 不同，后者在外部阅读器中打开附件
+  - {{zoteroReaderLink}}: 链接以在 Zotero 阅读器中打开特定附件。这与 {{file}} 不同，后者在外部阅读器中打开附件
   - {{localLibrary}}: Zotero 应用中该条目的链接
   - {{select}}: Zotero 应用中附件的链接
   - {{keywordsZotero}}: 条目元数据中的标签
