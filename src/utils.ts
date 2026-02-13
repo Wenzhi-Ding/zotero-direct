@@ -846,7 +846,7 @@ export function openSelectedNote(
 	);
 
 	//Open the Note in a new leaf
-	app.workspace.openLinkText(noteTitle, "", true);
+	void app.workspace.openLinkText(noteTitle, "", true);
 }
 
 export function parseCiteKeyFromNoteName(noteName:string, format:string) {

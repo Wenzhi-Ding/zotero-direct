@@ -87,7 +87,7 @@ export default class ZoteroDirectPlugin extends Plugin {
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
-			await this.loadData()
+			(await this.loadData()) as Partial<ZoteroDirectSettings> ?? {}
 		);
 	}
 
@@ -129,13 +129,13 @@ export default class ZoteroDirectPlugin extends Plugin {
 		);
 
 		//Create field year from date or dateEnacted
-		if (selectedEntry.hasOwnProperty("date") && selectedEntry.date) {
+		if (Object.prototype.hasOwnProperty.call(selectedEntry, "date") && selectedEntry.date) {
 			selectedEntry.year = selectedEntry.date.match(/\d{4}/)?.[0] || "";
-		} else if (selectedEntry.hasOwnProperty("dateEnacted") && selectedEntry.dateEnacted) {
+		} else if (Object.prototype.hasOwnProperty.call(selectedEntry, "dateEnacted") && selectedEntry.dateEnacted) {
 			selectedEntry.year = selectedEntry.dateEnacted.match(/\d{4}/)?.[0] || "";
 		}
 		//Create field ZoteroLocalLibrary
-		if (selectedEntry.hasOwnProperty("select")) {
+		if (Object.prototype.hasOwnProperty.call(selectedEntry, "select")) {
 			selectedEntry.localLibrary =
 				"[Zotero](" + selectedEntry.select + ")";
 			selectedEntry.localLibraryLink = selectedEntry.select;
@@ -774,7 +774,7 @@ export default class ZoteroDirectPlugin extends Plugin {
 			data = await readZoteroDatabase(dbPath, pluginDir);
 		} catch (e) {
 			new Notice(t().noticeDbReadFailed + (e as Error).message);
-			// eslint-disable-next-line no-console -- Error logging for debugging
+			 
 			console.error(e);
 			return;
 		}

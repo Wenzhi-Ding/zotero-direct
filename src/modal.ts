@@ -70,8 +70,8 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 	}
 	// Function used to move the cursor in the search bar when the modal is launched
 	focusInput() {
-		//@ts-expect-error - accessing DOM element directly, may be undefined but is expected to exist in modal
-		document.getElementsByClassName("prompt-input")[0].focus();
+		const el = document.getElementsByClassName("prompt-input")[0] as HTMLElement | undefined;
+		el?.focus();
 	}
 	async onOpen() {
 		if (Platform.isDesktopApp) {
@@ -149,7 +149,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 			}
 		} catch (e) {
 			new Notice(t().noticeDbReadFailed + (e as Error).message);
-			// eslint-disable-next-line no-console -- Error logging for debugging
+			 
 			console.error(e);
 			return;
 		}
@@ -163,7 +163,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 			const bibtexArrayItem = {} as Reference;
 
 			//Extract the citation key. If the citationkey does not exist skip
-			if (selectedEntry.hasOwnProperty("citationKey") == false) continue;
+			if (!Object.prototype.hasOwnProperty.call(selectedEntry, "citationKey")) continue;
 			bibtexArrayItem.citationKey = selectedEntry.citationKey;
 
 			//Extract the title key
@@ -171,7 +171,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 
 			// Extract the date
 			bibtexArrayItem.date = selectedEntry.date
-			if (selectedEntry.hasOwnProperty("date")) {
+			if (Object.prototype.hasOwnProperty.call(selectedEntry, "date")) {
 				selectedEntry.year = selectedEntry.date.match(/\d{4}/)?.[0] || ""
 				bibtexArrayItem.date = selectedEntry.year
 			}
@@ -1012,7 +1012,7 @@ export class UpdateLibraryModal extends Modal {
 			data = await readZoteroDatabase(dbPath, pluginDir);
 		} catch (e) {
 			new Notice(t().noticeDbReadFailed + (e as Error).message);
-			// eslint-disable-next-line no-console -- Error logging for debugging
+			 
 			console.error(e);
 			return;
 		}
@@ -1028,7 +1028,7 @@ export class UpdateLibraryModal extends Modal {
 			const bibtexArrayItem = {} as Reference;
 
 			//Extract the citation key. If the citationkey does not exist skip
-			if (selectedEntry.hasOwnProperty("citationKey") == false) continue;
+			if (!Object.prototype.hasOwnProperty.call(selectedEntry, "citationKey")) continue;
 			bibtexArrayItem.citationKey = selectedEntry.citationKey;
 
 			//Extract the date the entry was modified

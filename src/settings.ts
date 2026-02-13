@@ -70,7 +70,7 @@ export class SettingTab extends PluginSettingTab {
 							new Notice(s.cacheRebuiltSuccess(data.items.length));
 							this.display();
 						} catch (e) {
-							new Notice(s.cacheRebuildFailed + (e as Error).message);						// eslint-disable-next-line no-console -- Error logging for debugging							console.error("[BibNotes] Cache rebuild error:", e);
+							new Notice(s.cacheRebuildFailed + (e as Error).message);						 
 						}
 					});
 			})

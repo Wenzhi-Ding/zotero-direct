@@ -78,7 +78,8 @@ async function loadSqlJsFromPluginDir(pluginDir: string): Promise<SqlJsStatic> {
 		${sqlJsContent}
 		return typeof initSqlJs !== 'undefined' ? initSqlJs : undefined;
 	`);
-	
+
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call -- Dynamic UMD loader returns untyped initSqlJs
 	const initSqlJs = loader(globalThis, globalThis, globalThis, undefined, undefined);
 
 	if (!initSqlJs) {
@@ -86,8 +87,10 @@ async function loadSqlJsFromPluginDir(pluginDir: string): Promise<SqlJsStatic> {
 	}
 
 	// 挂载到 globalThis，供后续使用
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Assigning dynamically loaded initSqlJs
 	(globalThis as unknown as GlobalWithSqlJs).initSqlJs = initSqlJs;
 
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call -- Calling dynamically loaded initSqlJs
 	return await initSqlJs({ wasmBinary });
 }
 
@@ -174,7 +177,7 @@ export async function readZoteroDatabase(dbPath: string, pluginDir: string): Pro
 			bbtCiteKeys = extractBBTCiteKeys(bbtDb);
 			bbtDb.close();
 		} catch (e) {
-			// eslint-disable-next-line no-console -- Non-critical warning for optional BetterBibTeX integration
+			 
 			console.warn("Could not read BetterBibTeX database:", e);
 		}
 	}
@@ -215,7 +218,7 @@ export async function readZoteroDatabaseIncremental(
 				bbtCiteKeys = extractBBTCiteKeys(bbtDb);
 				bbtDb.close();
 			} catch (e) {
-				// eslint-disable-next-line no-console -- Non-critical warning for optional BetterBibTeX integration
+				 
 				console.warn("Could not read BetterBibTeX database:", e);
 			}
 		}
@@ -407,7 +410,7 @@ function extractBBTCiteKeys(db: SqlJsDatabase): Record<number, string> {
 			`SELECT * FROM "better-bibtex" WHERE name = 'better-bibtex.citekey'`
 		);
 		if (rows.length > 0 && rows[0]?.value) {
-			const parsed = JSON.parse(asString(rows[0]?.value));
+			const parsed = JSON.parse(asString(rows[0]?.value)) as { data?: Array<{ itemID?: number; citekey?: string }> };
 			if (Array.isArray(parsed?.data)) {
 				for (const entry of parsed.data) {
 					if (entry.itemID && entry.citekey) {
@@ -427,7 +430,7 @@ function extractBBTCiteKeys(db: SqlJsDatabase): Record<number, string> {
 				keys[row.itemID as number] = asString(row.citationKey);
 			}
 		} catch {
-			// eslint-disable-next-line no-console -- Non-critical warning for optional BetterBibTeX integration
+			 
 			console.warn("Could not extract BBT citation keys from any known schema");
 		}
 	}

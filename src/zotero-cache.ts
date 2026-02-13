@@ -67,7 +67,7 @@ export class ZoteroCacheManager {
 			this.cache = cache;
 			return cache;
 		} catch (e) {
-			// eslint-disable-next-line no-console -- Non-critical warning for cache loading
+			 
 			console.warn("[BibNotes] Failed to load cache:", e);
 			return null;
 		}
@@ -84,7 +84,7 @@ export class ZoteroCacheManager {
 				await this.app.vault.adapter.write(this.cacheFilePath, JSON.stringify(this.cache, null, 2));
 			}
 		} catch (e) {
-			// eslint-disable-next-line no-console -- Non-critical warning for cache saving
+			 
 			console.warn("[BibNotes] Failed to save cache:", e);
 		}
 	}
@@ -335,7 +335,7 @@ export class ZoteroCacheManager {
 				await this.app.vault.adapter.remove(this.cacheFilePath);
 			}
 		} catch (e) {
-			// eslint-disable-next-line no-console -- Non-critical warning for cache clearing
+			 
 			console.warn("[BibNotes] Failed to clear cache file:", e);
 		}
 	}
