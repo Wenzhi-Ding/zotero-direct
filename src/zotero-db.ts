@@ -15,6 +15,14 @@ import * as fs from "fs";
 import * as path from "path";
 import { Reference, Collection } from "./types";
 
+// ── Helper: safely convert unknown to string ─────────────────────────
+
+function asString(value: unknown): string {
+	if (typeof value === 'string') return value;
+	if (typeof value === 'number') return String(value);
+	return '';
+}
+
 // ── Minimal sql.js type definitions ──────────────────────────────────
 
 type SqlJsValue = string | number | Uint8Array | null;
@@ -65,6 +73,7 @@ async function loadSqlJsFromPluginDir(pluginDir: string): Promise<SqlJsStatic> {
 
 	// 创建一个函数来执行 sql-wasm.js 代码
 	// 关键：暂时屏蔽 module/exports，让 UMD 格式挂载 initSqlJs 到全局
+	// eslint-disable-next-line @typescript-eslint/no-implied-eval -- Loading sql-wasm.js UMD module requires dynamic code evaluation
 	const loader = new Function('globalThis', 'window', 'global', 'module', 'exports', `
 		${sqlJsContent}
 		return typeof initSqlJs !== 'undefined' ? initSqlJs : undefined;
@@ -96,7 +105,7 @@ async function initSql(pluginDir?: string): Promise<SqlJsStatic> {
 
 	sqlJsLoadingPromise = loadSqlJsFromPluginDir(pluginDir);
 	cachedSqlJs = await sqlJsLoadingPromise;
-	return cachedSqlJs!;
+	return cachedSqlJs;
 }
 
 // ── Helper: run a query and return rows as objects ───────────────────
@@ -165,6 +174,7 @@ export async function readZoteroDatabase(dbPath: string, pluginDir: string): Pro
 			bbtCiteKeys = extractBBTCiteKeys(bbtDb);
 			bbtDb.close();
 		} catch (e) {
+			// eslint-disable-next-line no-console -- Non-critical warning for optional BetterBibTeX integration
 			console.warn("Could not read BetterBibTeX database:", e);
 		}
 	}
@@ -205,6 +215,7 @@ export async function readZoteroDatabaseIncremental(
 				bbtCiteKeys = extractBBTCiteKeys(bbtDb);
 				bbtDb.close();
 			} catch (e) {
+				// eslint-disable-next-line no-console -- Non-critical warning for optional BetterBibTeX integration
 				console.warn("Could not read BetterBibTeX database:", e);
 			}
 		}
@@ -270,19 +281,20 @@ export async function readZoteroDatabaseIncremental(
 	
 			const creatorsByItem: Record<number, Record<string, string>[]> = {};
 			for (const c of creatorRows) {
-				if (!creatorsByItem[c.itemID as number]) creatorsByItem[c.itemID as number] = [];
+				const cItemID = c.itemID as number;
+				if (!creatorsByItem[cItemID]) creatorsByItem[cItemID] = [];
 				if (c.fieldMode === 1) {
-					creatorsByItem[c.itemID as number]!.push({
-						creatorType: String(c.creatorType || ""),
+					creatorsByItem[cItemID].push({
+						creatorType: asString(c.creatorType),
 						firstName: "",
 						lastName: "",
-						name: String(c.lastName || ""),
+						name: asString(c.lastName),
 					});
 				} else {
-					creatorsByItem[c.itemID as number]!.push({
-						creatorType: String(c.creatorType || ""),
-						firstName: String(c.firstName || ""),
-						lastName: String(c.lastName || ""),
+					creatorsByItem[cItemID].push({
+						creatorType: asString(c.creatorType),
+						firstName: asString(c.firstName),
+						lastName: asString(c.lastName),
 						name: "",
 					});
 				}
@@ -290,8 +302,9 @@ export async function readZoteroDatabaseIncremental(
 	
 			const tagsByItem: Record<number, { tag: string }[]> = {};
 			for (const t of tagRows) {
-				if (!tagsByItem[t.itemID as number]) tagsByItem[t.itemID as number] = [];
-				tagsByItem[t.itemID as number]!.push({ tag: String(t.tag) });
+				const tItemID = t.itemID as number;
+				if (!tagsByItem[tItemID]) tagsByItem[tItemID] = [];
+				tagsByItem[tItemID].push({ tag: asString(t.tag) });
 			}
 
 		// Build references
@@ -300,8 +313,8 @@ export async function readZoteroDatabaseIncremental(
 
 		for (const item of items) {
 			const itemID = item.itemID as number;
-			const itemKey = String(item.itemKey || "");
-			const itemType = String(item.itemType || "");
+			const itemKey = asString(item.itemKey);
+			const itemType = asString(item.itemType);
 			const fields = fieldsByItem[itemID] || {};
 
 			let citationKey = "";
@@ -326,7 +339,7 @@ export async function readZoteroDatabaseIncremental(
 				itemType: itemType,
 				title: (fields.title || fields.nameOfAct || "").replace(/^'|'$/g, ""),
 				date: fields.date || fields.dateEnacted || "",
-				dateModified: String(item.dateModified || ""),
+				dateModified: asString(item.dateModified),
 				publicationTitle: fields.publicationTitle || fields.journalAbbreviation || (itemType === "conferencePaper" ? fields.series : "") || (itemType === "statute" ? fields.code : "") || "",
 				volume: fields.volume || "",
 				issue: fields.issue || "",
@@ -337,7 +350,7 @@ export async function readZoteroDatabaseIncremental(
 				ISBN: fields.ISBN || "",
 				ISSN: fields.ISSN || "",
 				url: fields.url || "",
-				dateAdded: String(item.dateAdded || ""),
+				dateAdded: asString(item.dateAdded),
 				creators: creatorsByItem[itemID] || [],
 				tags: tagsByItem[itemID] || [],
 				attachments: [],
@@ -394,7 +407,7 @@ function extractBBTCiteKeys(db: SqlJsDatabase): Record<number, string> {
 			`SELECT * FROM "better-bibtex" WHERE name = 'better-bibtex.citekey'`
 		);
 		if (rows.length > 0 && rows[0]?.value) {
-			const parsed = JSON.parse(String(rows[0].value));
+			const parsed = JSON.parse(asString(rows[0]?.value));
 			if (Array.isArray(parsed?.data)) {
 				for (const entry of parsed.data) {
 					if (entry.itemID && entry.citekey) {
@@ -411,9 +424,10 @@ function extractBBTCiteKeys(db: SqlJsDatabase): Record<number, string> {
 				`SELECT itemID, citationKey FROM citationkey`
 			);
 			for (const row of rows) {
-				keys[row.itemID as number] = String(row.citationKey);
+				keys[row.itemID as number] = asString(row.citationKey);
 			}
 		} catch {
+			// eslint-disable-next-line no-console -- Non-critical warning for optional BetterBibTeX integration
 			console.warn("Could not extract BBT citation keys from any known schema");
 		}
 	}
@@ -464,21 +478,22 @@ function extractItems(
 	);
 	const creatorsByItem: Record<number, Record<string, string>[]> = {};
 	for (const c of creatorRows) {
-		if (!creatorsByItem[c.itemID as number]) creatorsByItem[c.itemID as number] = [];
+		const cItemID = c.itemID as number;
+		if (!creatorsByItem[cItemID]) creatorsByItem[cItemID] = [];
 		if (c.fieldMode === 1) {
 			// Institutional / single-field creator
-			creatorsByItem[c.itemID as number]!.push({
-				creatorType: String(c.creatorType || ""),
+			creatorsByItem[cItemID].push({
+				creatorType: asString(c.creatorType),
 				firstName: "",
 				lastName: "",
-				name: String(c.lastName || ""),
+				name: asString(c.lastName),
 			});
 		} else {
 			// Personal creator (firstName + lastName)
-			creatorsByItem[c.itemID as number]!.push({
-				creatorType: String(c.creatorType || ""),
-				firstName: String(c.firstName || ""),
-				lastName: String(c.lastName || ""),
+			creatorsByItem[cItemID].push({
+				creatorType: asString(c.creatorType),
+				firstName: asString(c.firstName),
+				lastName: asString(c.lastName),
 				name: "",
 			});
 		}
@@ -493,8 +508,9 @@ function extractItems(
 	);
 	const tagsByItem: Record<number, { tag: string }[]> = {};
 	for (const t of tagRows) {
-		if (!tagsByItem[t.itemID as number]) tagsByItem[t.itemID as number] = [];
-		tagsByItem[t.itemID as number]!.push({ tag: String(t.tag) });
+		const tItemID = t.itemID as number;
+		if (!tagsByItem[tItemID]) tagsByItem[tItemID] = [];
+		tagsByItem[tItemID].push({ tag: asString(t.tag) });
 	}
 
 	// 5. Attachments
@@ -519,9 +535,9 @@ function extractItems(
 		if (!attachmentsByItem[parentItemID])
 			attachmentsByItem[parentItemID] = [];
 
-		let filePath = String(a.path || "");
-		let title = String(a.title || "");
-		const itemKey = String(a.itemKey || "");
+		let filePath = asString(a.path);
+		let title = asString(a.title);
+		const itemKey = asString(a.itemKey);
 
 		if (filePath.startsWith("storage:")) {
 			const filename = filePath.replace("storage:", "");
@@ -531,7 +547,7 @@ function extractItems(
 			if (!title) title = path.basename(filePath);
 		}
 
-		attachmentsByItem[parentItemID]!.push({
+		attachmentsByItem[parentItemID].push({
 			dateAdded: a.dateAdded,
 			dateModified: a.dateModified,
 			itemType: "attachment",
@@ -558,12 +574,12 @@ function extractItems(
 	for (const n of noteRows) {
 		const parentItemID = n.parentItemID as number;
 		if (!notesByItem[parentItemID]) notesByItem[parentItemID] = [];
-		notesByItem[parentItemID]!.push({
+		notesByItem[parentItemID].push({
 			dateAdded: n.dateAdded,
 			dateModified: n.dateModified,
 			itemType: "note",
 			key: n.key,
-			note: String(n.note || ""),
+			note: asString(n.note),
 			parentItem: "",
 			relations: [],
 			tags: [],
@@ -577,8 +593,8 @@ function extractItems(
 
 	for (const item of items) {
 		const itemID = item.itemID as number;
-		const itemKey = String(item.itemKey || "");
-		const itemType = String(item.itemType || "");
+		const itemKey = asString(item.itemKey);
+		const itemType = asString(item.itemType);
 		const fields = fieldsByItem[itemID] || {};
 
 		// ── Determine citation key ──
@@ -607,7 +623,7 @@ function extractItems(
 			// ── basic metadata ──
 			title: fields.title || fields.nameOfAct || "",
 			date: fields.date || fields.dateEnacted || "",
-			dateModified: String(item.dateModified || ""),
+			dateModified: asString(item.dateModified),
 			publicationTitle:
 				fields.publicationTitle || fields.journalAbbreviation || (itemType === "conferencePaper" ? fields.series : "") || (itemType === "statute" ? fields.code : "") || "",
 			volume: fields.volume || "",
@@ -672,7 +688,7 @@ function extractCollections(
 	// Map collectionID → key for parent lookup
 	const idToKey: Record<number, string> = {};
 	for (const c of collRows) {
-		idToKey[c.collectionID as number] = String(c.key);
+		idToKey[c.collectionID as number] = asString(c.key);
 	}
 
 	// Items per collection
@@ -683,20 +699,21 @@ function extractCollections(
 	);
 	const itemsByCollection: Record<number, number[]> = {};
 	for (const ci of ciRows) {
-		if (!itemsByCollection[ci.collectionID as number])
-			itemsByCollection[ci.collectionID as number] = [];
-		itemsByCollection[ci.collectionID as number]!.push(ci.itemID as number);
+		const collID = ci.collectionID as number;
+		if (!itemsByCollection[collID])
+			itemsByCollection[collID] = [];
+		itemsByCollection[collID].push(ci.itemID as number);
 	}
 
 	// Build objects
 	const result: Record<string, Collection> = {};
 	for (const c of collRows) {
-		const key = String(c.key);
+		const key = asString(c.key);
 		result[key] = {
 			collections: [],
 			items: (itemsByCollection[c.collectionID as number] || []).map(String),
 			key: key,
-			name: String(c.name || ""),
+			name: asString(c.name),
 			parent: c.parentCollectionID
 				? idToKey[c.parentCollectionID as number] || ""
 				: "",

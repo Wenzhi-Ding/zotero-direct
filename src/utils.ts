@@ -19,11 +19,15 @@ export function replaceAllTemplates(
 
 		const KW_Brackets = "{{" + KW + "}}";
 		// 	 replace the keyword in the template
+		const rawValue = selectedEntry[KW as keyof Reference];
+		const strValue = typeof rawValue === 'string' ? rawValue
+			: typeof rawValue === 'number' ? String(rawValue)
+			: '';
 
 		copy = replaceTemplate(
 			copy,
 			KW_Brackets,
-			`${selectedEntry[KW as keyof Reference]}`
+			strValue
 		);
 
 		// fixed the type

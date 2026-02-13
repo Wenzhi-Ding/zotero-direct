@@ -94,13 +94,14 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 
 		try {
 			// Check if database has changed
-			const hasChanges = await cacheManager.hasDbChanged();
+			const hasChanges = cacheManager.hasDbChanged();
 			
 			if (!hasChanges && cacheManager.getCache()) {
 				// Use cached data
 				const cache = cacheManager.getCache()!;
 				cachedItems = cache.items;
 				data = { items: cachedItems as Reference[], collections: cache.collections };
+				// eslint-disable-next-line no-console -- Debug mode logging
 				if (this.plugin.settings.debugMode) console.log("[BibNotes] Using cached data:", cachedItems.length, "items");
 			} else {
 				// Check for incremental update
@@ -125,6 +126,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 						await cacheManager.saveCache();
 						cachedItems = cacheManager.getCache()!.items;
 						data = { items: cachedItems as Reference[], collections: update.collections };
+						// eslint-disable-next-line no-console -- Debug mode logging
 						if (this.plugin.settings.debugMode) console.log("[BibNotes] Incremental update:", update.items.length, "items updated");
 					} else {
 						// No changes or failed incremental, do full refresh
@@ -132,6 +134,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 						cacheManager.updateCache(data.items as CachedReference[], data.collections);
 						await cacheManager.saveCache();
 						cachedItems = data.items as CachedReference[];
+						// eslint-disable-next-line no-console -- Debug mode logging
 						if (this.plugin.settings.debugMode) console.log("[BibNotes] Full refresh:", data.items.length, "items");
 					}
 				} else {
@@ -140,11 +143,13 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 					cacheManager.updateCache(data.items as CachedReference[], data.collections);
 					await cacheManager.saveCache();
 					cachedItems = data.items as CachedReference[];
+					// eslint-disable-next-line no-console -- Debug mode logging
 					if (this.plugin.settings.debugMode) console.log("[BibNotes] Initial cache:", data.items.length, "items");
 				}
 			}
 		} catch (e) {
 			new Notice(t().noticeDbReadFailed + (e as Error).message);
+			// eslint-disable-next-line no-console -- Error logging for debugging
 			console.error(e);
 			return;
 		}
@@ -918,10 +923,14 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 	}
 
 	// Perform action on the selected suggestion.
-	async onChooseSuggestion(
+	onChooseSuggestion(
 		item: ScoredReference,
-		_evt: MouseEvent | KeyboardEvent, // eslint-disable-line @typescript-eslint/no-unused-vars
+		_evt: MouseEvent | KeyboardEvent,
 	) {
+		void this.handleChooseSuggestion(item);
+	}
+
+	private async handleChooseSuggestion(item: ScoredReference) {
 		const referenceSelected = item.reference;
 		//Create an array where you store the citekey to be processed
 		const citeKeyToBeProcessed: string[] = [];
@@ -983,6 +992,7 @@ export class UpdateLibraryModal extends Modal {
 	async onOpen() {
 		this.setTitle(t().cmdUpdateLibrary);
 		this.setContent("Updating...");
+		// eslint-disable-next-line no-console -- Debug mode logging
 		if (this.plugin.settings.debugMode) console.log("[BibNotes] Updating Zotero library");
 
 		const dbPath = this.plugin.settings.zoteroDbPath;
@@ -1002,6 +1012,7 @@ export class UpdateLibraryModal extends Modal {
 			data = await readZoteroDatabase(dbPath, pluginDir);
 		} catch (e) {
 			new Notice(t().noticeDbReadFailed + (e as Error).message);
+			// eslint-disable-next-line no-console -- Error logging for debugging
 			console.error(e);
 			return;
 		}
@@ -1067,7 +1078,7 @@ export class UpdateLibraryModal extends Modal {
 		new Notice(t().noticeUpdatedEntries(bibtexArray.length));
 		//Update the date when the update was last done
 		this.plugin.settings.lastUpdateDate = new Date();
-		this.plugin.saveSettings();
+		void this.plugin.saveSettings();
 
 		// Show completion with close button
 		const { contentEl } = this;

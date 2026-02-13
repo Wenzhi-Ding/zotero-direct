@@ -7,7 +7,7 @@ import { t } from "./i18n";
 export class SettingTab extends PluginSettingTab {
 	plugin: MyPlugin;
 	private debouncedSave = debounce(
-		async () => { await this.plugin.saveSettings(); },
+		() => { void this.plugin.saveSettings(); },
 		500,
 		true
 	);
@@ -70,14 +70,13 @@ export class SettingTab extends PluginSettingTab {
 							new Notice(s.cacheRebuiltSuccess(data.items.length));
 							this.display();
 						} catch (e) {
-							new Notice(s.cacheRebuildFailed + (e as Error).message);
-							console.error("[BibNotes] Cache rebuild error:", e);
+							new Notice(s.cacheRebuildFailed + (e as Error).message);						// eslint-disable-next-line no-console -- Error logging for debugging							console.error("[BibNotes] Cache rebuild error:", e);
 						}
 					});
 			})
 			.addText((text) => {
 				text.setDisabled(true);
-				import("./zotero-cache").then(({ getCacheManager }) => {
+				void import("./zotero-cache").then(({ getCacheManager }) => {
 					const cacheManager = getCacheManager(this.app, settings.zoteroDbPath);
 					const stats = cacheManager.getCacheStats();
 					if (stats.itemCount > 0) {
