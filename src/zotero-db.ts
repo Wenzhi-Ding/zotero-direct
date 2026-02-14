@@ -77,9 +77,9 @@ async function loadSqlJsFromPluginDir(pluginDir: string): Promise<SqlJsStatic> {
 	const loader = new Function('globalThis', 'window', 'global', 'module', 'exports', `
 		${sqlJsContent}
 		return typeof initSqlJs !== 'undefined' ? initSqlJs : undefined;
-	`);
+	`) as (...args: unknown[]) => InitSqlJsFn | undefined;
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call -- Dynamic UMD loader returns untyped initSqlJs
+	type InitSqlJsFn = (config: { wasmBinary: ArrayBuffer }) => Promise<SqlJsStatic>;
 	const initSqlJs = loader(globalThis, globalThis, globalThis, undefined, undefined);
 
 	if (!initSqlJs) {
@@ -87,10 +87,8 @@ async function loadSqlJsFromPluginDir(pluginDir: string): Promise<SqlJsStatic> {
 	}
 
 	// 挂载到 globalThis，供后续使用
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Assigning dynamically loaded initSqlJs
 	(globalThis as unknown as GlobalWithSqlJs).initSqlJs = initSqlJs;
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call -- Calling dynamically loaded initSqlJs
 	return await initSqlJs({ wasmBinary });
 }
 

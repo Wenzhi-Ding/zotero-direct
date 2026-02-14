@@ -211,11 +211,9 @@ export default class ZoteroDirectPlugin extends Plugin {
 		//create field path field
 		selectedEntry.filePath = createLocalFilePathLink(selectedEntry);
 		//create Zotero reader path field
-		// eslint-disable-next-line no-console -- Debug mode logging
-		if (this.settings.debugMode) console.log("[BibNotes] filePath:", selectedEntry.filePath);
+		if (this.settings.debugMode) console.debug("[BibNotes] filePath:", selectedEntry.filePath);
 		selectedEntry.zoteroReaderLink = createZoteroReaderPathLink(selectedEntry);
-		// eslint-disable-next-line no-console -- Debug mode logging
-		if (this.settings.debugMode) console.log("[BibNotes] zoteroReaderLink:", selectedEntry.zoteroReaderLink);
+		if (this.settings.debugMode) console.debug("[BibNotes] zoteroReaderLink:", selectedEntry.zoteroReaderLink);
 
 
 
@@ -681,13 +679,11 @@ export default class ZoteroDirectPlugin extends Plugin {
 
 		//Load Template
 		const templateNote = this.importTemplate();
-		// eslint-disable-next-line no-console -- Debug mode logging
-		if (this.settings.debugMode) console.log("[BibNotes] Template:", templateNote);
+		if (this.settings.debugMode) console.debug("[BibNotes] Template:", templateNote);
 
 		//Create the metadata
 		let litnote: string = this.parseMetadata(selectedEntry, templateNote);
-		// eslint-disable-next-line no-console -- Debug mode logging
-		if (this.settings.debugMode) console.log("[BibNotes] Entry:", selectedEntry);
+		if (this.settings.debugMode) console.debug("[BibNotes] Entry:", selectedEntry);
 
 		//Extract the list of collections
 		litnote = this.parseCollection(selectedEntry, data, litnote);
@@ -735,10 +731,8 @@ export default class ZoteroDirectPlugin extends Plugin {
 
 		//Export the file
 		if (this.settings.debugMode) {
-			// eslint-disable-next-line no-console -- Debug mode logging
-			console.log("[BibNotes] NoteRelPath:", noteRelPath);
-			// eslint-disable-next-line no-console -- Debug mode logging
-			console.log("[BibNotes] Final Note:", litnote);
+			console.debug("[BibNotes] NoteRelPath:", noteRelPath);
+			console.debug("[BibNotes] Final Note:", litnote);
 		}
 		if (existingFile instanceof TFile) {
 			await this.app.vault.modify(existingFile, litnote);
@@ -754,8 +748,7 @@ export default class ZoteroDirectPlugin extends Plugin {
 	}
 
 	async updateCurrentNote(){
-		// eslint-disable-next-line no-console -- Debug mode logging
-		if (this.settings.debugMode) console.log("[BibNotes] Updating Current Note");
+		if (this.settings.debugMode) console.debug("[BibNotes] Updating Current Note");
 
 		// Check if the database path is set
 		const dbPath = this.settings.zoteroDbPath;

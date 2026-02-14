@@ -33,7 +33,7 @@ export class SettingTab extends PluginSettingTab {
 				text
 					.setPlaceholder(s.zoteroDbPathPlaceholder)
 					.setValue(settings.zoteroDbPath)
-					.onChange(async (value) => {
+					.onChange((value) => {
 						settings.zoteroDbPath = value;
 						this.debouncedSave();
 					})
@@ -109,7 +109,7 @@ export class SettingTab extends PluginSettingTab {
 				text
 					.setPlaceholder(s.noteTitlePlaceholder)
 					.setValue(settings.exportTitle)
-					.onChange(async (value) => {
+					.onChange((value) => {
 						settings.exportTitle = value;
 						this.debouncedSave();
 					})
@@ -145,7 +145,7 @@ export class SettingTab extends PluginSettingTab {
 					// this is not strictly necessary, but it makes it a lot easier to read long lines
 					text.inputEl.setCssProps({ "width": "100%" });
 					text.setValue(settings.templateContent).onChange(
-						async (value) => {
+						(value) => {
 							settings.templateContent = value;
 							this.debouncedSave();
 							//this.display();
@@ -181,7 +181,7 @@ export class SettingTab extends PluginSettingTab {
 				.addText((text) =>
 					text
 						.setValue(settings.missingfieldreplacement)
-						.onChange(async (value) => {
+						.onChange((value) => {
 							settings.missingfieldreplacement = value;
 							this.debouncedSave();
 						})
@@ -194,7 +194,7 @@ export class SettingTab extends PluginSettingTab {
 			.addTextArea((text) =>
 				text
 					.setValue(settings.multipleFieldsDivider)
-					.onChange(async (value) => {
+				.onChange((value) => {
 						settings.multipleFieldsDivider = value;
 					this.debouncedSave();
 					})
@@ -241,7 +241,7 @@ export class SettingTab extends PluginSettingTab {
 				.addText((text) =>
 					text
 						.setValue(settings.saveManualEditsStart)
-						.onChange(async (value) => {
+						.onChange((value) => {
 							settings.saveManualEditsStart = value;
 							this.debouncedSave();
 						})
@@ -254,7 +254,7 @@ export class SettingTab extends PluginSettingTab {
 					.addText((text) =>
 						text
 							.setValue(settings.saveManualEditsEnd)
-							.onChange(async (value) => {
+							.onChange((value) => {
 								settings.saveManualEditsEnd = value;
 								this.debouncedSave();
 							})

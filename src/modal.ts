@@ -101,8 +101,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 				const cache = cacheManager.getCache()!;
 				cachedItems = cache.items;
 				data = { items: cachedItems as Reference[], collections: cache.collections };
-				// eslint-disable-next-line no-console -- Debug mode logging
-				if (this.plugin.settings.debugMode) console.log("[BibNotes] Using cached data:", cachedItems.length, "items");
+				if (this.plugin.settings.debugMode) console.debug("[BibNotes] Using cached data:", cachedItems.length, "items");
 			} else {
 				// Check for incremental update
 				const cache = cacheManager.getCache();
@@ -126,16 +125,14 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 						await cacheManager.saveCache();
 						cachedItems = cacheManager.getCache()!.items;
 						data = { items: cachedItems as Reference[], collections: update.collections };
-						// eslint-disable-next-line no-console -- Debug mode logging
-						if (this.plugin.settings.debugMode) console.log("[BibNotes] Incremental update:", update.items.length, "items updated");
+						if (this.plugin.settings.debugMode) console.debug("[BibNotes] Incremental update:", update.items.length, "items updated");
 					} else {
 						// No changes or failed incremental, do full refresh
 						data = await readZoteroDatabase(dbPath, pluginDir);
 						cacheManager.updateCache(data.items as CachedReference[], data.collections);
 						await cacheManager.saveCache();
 						cachedItems = data.items as CachedReference[];
-						// eslint-disable-next-line no-console -- Debug mode logging
-						if (this.plugin.settings.debugMode) console.log("[BibNotes] Full refresh:", data.items.length, "items");
+						if (this.plugin.settings.debugMode) console.debug("[BibNotes] Full refresh:", data.items.length, "items");
 					}
 				} else {
 					// No cache or first time, do full read
@@ -143,8 +140,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 					cacheManager.updateCache(data.items as CachedReference[], data.collections);
 					await cacheManager.saveCache();
 					cachedItems = data.items as CachedReference[];
-					// eslint-disable-next-line no-console -- Debug mode logging
-					if (this.plugin.settings.debugMode) console.log("[BibNotes] Initial cache:", data.items.length, "items");
+					if (this.plugin.settings.debugMode) console.debug("[BibNotes] Initial cache:", data.items.length, "items");
 				}
 			}
 		} catch (e) {
@@ -992,8 +988,7 @@ export class UpdateLibraryModal extends Modal {
 	async onOpen() {
 		this.setTitle(t().cmdUpdateLibrary);
 		this.setContent("Updating...");
-		// eslint-disable-next-line no-console -- Debug mode logging
-		if (this.plugin.settings.debugMode) console.log("[BibNotes] Updating Zotero library");
+		if (this.plugin.settings.debugMode) console.debug("[BibNotes] Updating Zotero library");
 
 		const dbPath = this.plugin.settings.zoteroDbPath;
 		if (!dbPath) {
