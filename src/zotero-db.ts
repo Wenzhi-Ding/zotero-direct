@@ -143,11 +143,23 @@ interface IncrementalUpdate {
 
 /**
  * Get the modification time of the Zotero database file.
+ * Also checks the WAL (Write-Ahead Logging) file, because when Zotero
+ * is running it writes new data to zotero.sqlite-wal rather than the
+ * main database file — so the main file's mtime may not change.
  * Returns 0 if the file does not exist.
  */
 export function getDbModificationTime(dbPath: string): number {
-	if (!fs.existsSync(dbPath)) return 0;
-	return fs.statSync(dbPath).mtimeMs;
+	let mtime = 0;
+	if (fs.existsSync(dbPath)) {
+		mtime = fs.statSync(dbPath).mtimeMs;
+	}
+	// Check WAL file (Zotero uses WAL mode when running)
+	const walPath = dbPath + "-wal";
+	if (fs.existsSync(walPath)) {
+		const walMtime = fs.statSync(walPath).mtimeMs;
+		mtime = Math.max(mtime, walMtime);
+	}
+	return mtime;
 }
 
 // ── Main entry point ─────────────────────────────────────────────────

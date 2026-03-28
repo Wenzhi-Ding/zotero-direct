@@ -28,6 +28,11 @@ interface I18nStrings {
 	zoteroDbPathName: string;
 	zoteroDbPathDesc: string;
 	zoteroDbPathPlaceholder: string;
+	zoteroDbManualPathName: string;
+	zoteroDbAutoDetectedDesc: string;
+	zoteroDbManualOverrideDesc: string;
+	zoteroDbDefaultNotFoundDesc: string;
+	zoteroDbClearManualPathTooltip: string;
 
 	// ── Settings: Cache ──
 	cacheStatusName: string;
@@ -122,13 +127,20 @@ const en: I18nStrings = {
 	zoteroDbPathDesc:
 		"Absolute path to Zotero's SQLite database file (zotero.sqlite). For example: C:\\Users\\YourName\\Zotero\\zotero.sqlite",
 	zoteroDbPathPlaceholder: "C:\\Users\\YourName\\Zotero\\zotero.sqlite",
+	zoteroDbManualPathName: "Manual Zotero Database Path",
+	zoteroDbAutoDetectedDesc: "Using the Zotero database found in the default location.",
+	zoteroDbManualOverrideDesc:
+		"Using your manually configured Zotero database path. Reset to switch back to the detected default path.",
+	zoteroDbDefaultNotFoundDesc:
+		"Could not find Zotero in the default location. Set the database path manually below.",
+	zoteroDbClearManualPathTooltip: "Clear manual path and use detected default",
 
 	// ── Settings: Cache ──
 	cacheStatusName: "Cache Status",
 	cacheStatusDesc:
 		"Click the refresh button to rebuild the cache from Zotero database. This pre-builds the cache so that subsequent imports are faster.",
 	cacheRebuildTooltip: "Rebuild cache from Zotero database",
-	cacheSetPathFirst: "Please set the Zotero database path first.",
+	cacheSetPathFirst: "Could not find the Zotero database automatically. Please set the path manually first.",
 	cacheRebuilding:
 		"Rebuilding cache from Zotero database, this may take a while...",
 	cacheRebuiltSuccess: (count) => `Cache rebuilt successfully: ${count} items cached.`,
@@ -205,7 +217,7 @@ const en: I18nStrings = {
 	// ── Notices ──
 	noticeImported: (citeKey) => `Imported ${citeKey}!`,
 	noticeDbNotConfigured:
-		"Zotero database path not configured. Please set it in plugin settings.",
+		"Could not find the Zotero database in the default location. Please set it manually in plugin settings.",
 	noticeDbReadFailed: "Failed to read Zotero database: ",
 	noticeUpdatedEntries: (count) => `Updated ${count} entries`,
 	noticeCurrentNoteUpdated: (name) => `Current Note ${name} updated`,
@@ -231,13 +243,18 @@ const zh: I18nStrings = {
 	zoteroDbPathDesc:
 		"Zotero 的 SQLite 数据库文件（zotero.sqlite）的绝对路径。例如：C:\\Users\\用户名\\Zotero\\zotero.sqlite",
 	zoteroDbPathPlaceholder: "C:\\Users\\用户名\\Zotero\\zotero.sqlite",
+	zoteroDbManualPathName: "手动设置 Zotero 数据库路径",
+	zoteroDbAutoDetectedDesc: "已自动使用默认位置找到的 Zotero 数据库。",
+	zoteroDbManualOverrideDesc: "当前正在使用你手动设置的 Zotero 数据库路径。重置后会恢复使用自动检测到的默认路径。",
+	zoteroDbDefaultNotFoundDesc: "在默认位置没有找到 Zotero 数据库。请在下面手动设置路径。",
+	zoteroDbClearManualPathTooltip: "清除手动路径并恢复自动检测",
 
 	// ── 设置：缓存 ──
 	cacheStatusName: "缓存状态",
 	cacheStatusDesc:
 		"点击刷新按钮从 Zotero 数据库重建缓存。预先构建缓存可以使后续导入更快。",
 	cacheRebuildTooltip: "从 Zotero 数据库重建缓存",
-	cacheSetPathFirst: "请先设置 Zotero 数据库路径。",
+	cacheSetPathFirst: "没有自动找到 Zotero 数据库，请先手动设置路径。",
 	cacheRebuilding: "正在从 Zotero 数据库重建缓存，请稍候…",
 	cacheRebuiltSuccess: (count) => `缓存重建成功：已缓存 ${count} 个条目。`,
 	cacheRebuildFailed: "缓存重建失败：",
@@ -309,7 +326,7 @@ const zh: I18nStrings = {
 
 	// ── 通知 ──
 	noticeImported: (citeKey) => `已导入 ${citeKey}！`,
-	noticeDbNotConfigured: "未配置 Zotero 数据库路径，请在插件设置中进行设置。",
+	noticeDbNotConfigured: "在默认位置没有找到 Zotero 数据库，请在插件设置中手动设置路径。",
 	noticeDbReadFailed: "读取 Zotero 数据库失败：",
 	noticeUpdatedEntries: (count) => `已更新 ${count} 个条目`,
 	noticeCurrentNoteUpdated: (name) => `当前笔记 ${name} 已更新`,

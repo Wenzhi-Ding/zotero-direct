@@ -34,26 +34,28 @@ This plugin **reads the Zotero database directly**, no need to export JSON files
 
 ### Configuration Steps
 
-1. In plugin settings, configure your **Zotero database path**:
-   - Windows: `C:\Users\<username>\Zotero\zotero.sqlite`
-   - macOS: `~/Library/Application Support/Zotero/Profiles/<random>/zotero.sqlite`
-   - Linux: `~/.zotero/zotero/<random>/zotero.sqlite`
+1. The plugin will **automatically detect the Zotero database** in the default location first.
+   - Common defaults include:
+     - Windows: `C:\Users\<username>\Zotero\zotero.sqlite`
+     - macOS: `~/Library/Application Support/Zotero/Profiles/<random>/zotero.sqlite`
+     - Linux: `~/.zotero/zotero/<random>/zotero.sqlite`
+   - Only if the database cannot be found in the default location will the settings page ask you to configure a **manual Zotero database path**.
 
 2. Set the **Export Path** for literature notes: specify a folder in your Obsidian vault (e.g., `Literature Notes`)
 
 3. (Optional) Configure other template and formatting options
 
-> **Tip**: The plugin automatically reads your Zotero database to get the latest literature info. When you add, modify, or delete items in Zotero, just run the update command in Obsidian to sync.
+> **Tip**: The plugin checks for Zotero database changes whenever you open the search dialog, and will refresh cached data automatically when it detects updates. The Update Library and Update Current Note commands follow the same path-resolution logic: they use your manual path if you set one, otherwise they fall back to the detected default database location.
 
 ## Commands
 
 The plugin provides two commands:
 
-- **Create/Update Literature Note**: After selecting this command, you can choose a reference from your Zotero library. If the reference hasn't been imported yet, a new note will be generated; if it already exists, the note content will be updated (without overwriting annotations you manually added in Obsidian). The first option ("Entire Library") can be used to create/update notes for all references in the library.
+- **Create/Update Literature Note**: After selecting this command, you can choose a reference from your Zotero library. When the search dialog opens, the plugin first checks whether the Zotero database has changed and refreshes the cache if needed, so the search results stay up to date. If the reference hasn't been imported yet, a new note will be generated; if it already exists, the note content will be updated (without overwriting annotations you manually added in Obsidian).
 
 ![](/images/SelectCommandExample.png)
 
-- **Update Library**: After selecting this command, the plugin will generate/update all notes that have been modified in Zotero since the last time this command was run.
+- **Update Library**: After selecting this command, the plugin will use your manual Zotero database path if one is configured; otherwise it will use the automatically detected default database location. It then generates/updates all notes that have been modified in Zotero since the last time this command was run.
 
 ## Creating Literature Notes
 

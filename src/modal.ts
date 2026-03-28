@@ -1,5 +1,5 @@
 import MyPlugin from "./main";
-import { App, FileSystemAdapter, Modal, SuggestModal, Notice, Platform, Setting } from "obsidian";
+import { App, Modal, SuggestModal, Notice, Platform, Setting } from "obsidian";
 
 import { Reference, Creator } from "./types";
 import { t } from "./i18n";
@@ -42,8 +42,8 @@ import {
 	orderByDateModified,
 } from "./utils";
 
-import { readZoteroDatabase, readZoteroDatabaseIncremental, ZoteroData } from "./zotero-db";
-import { getCacheManager, CachedReference } from "./zotero-cache";
+import { ZoteroData } from "./zotero-db";
+import { getCacheManager } from "./zotero-cache";
 
 
 export class SelectReferenceModal extends SuggestModal<ScoredReference> {
@@ -67,6 +67,8 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 		super(app);
 		this.plugin = plugin;
 		this.emptyStateText = t().noSearchResult;
+		// Add plugin-specific class for scoped CSS styling
+		this.modalEl.addClass('bibnotes-modal');
 	}
 	// Function used to move the cursor in the search bar when the modal is launched
 	focusInput() {
@@ -78,77 +80,19 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 			this.focusInput();
 		}
 
-		// Read Zotero database with cache
-		const dbPath = this.plugin.settings.zoteroDbPath;
-		if (!dbPath) {
-			new Notice(t().noticeDbNotConfigured);
-			return;
-		}
-
-		// Initialize cache manager
-		const cacheManager = getCacheManager(this.app, dbPath);
-		await cacheManager.loadCache();
-
-		let data: ZoteroData;
-		let cachedItems: CachedReference[] = [];
-
 		try {
-			// Check if database has changed
-			const hasChanges = cacheManager.hasDbChanged();
-			
-			if (!hasChanges && cacheManager.getCache()) {
-				// Use cached data
-				const cache = cacheManager.getCache()!;
-				cachedItems = cache.items;
-				data = { items: cachedItems as Reference[], collections: cache.collections };
-				if (this.plugin.settings.debugMode) console.debug("[BibNotes] Using cached data:", cachedItems.length, "items");
-			} else {
-				// Check for incremental update
-				const cache = cacheManager.getCache();
-				// 获取插件目录的绝对路径
-				const adapter = this.app.vault.adapter;
-				const vaultBasePath = adapter instanceof FileSystemAdapter ? adapter.getBasePath() : "";
-				const pluginDir = vaultBasePath && this.plugin.manifest.dir 
-					? vaultBasePath + "/" + this.plugin.manifest.dir 
-					: this.plugin.manifest.dir || "";
-				if (cache && cache.dbLastModified > 0) {
-					// Try incremental update
-					const update = await readZoteroDatabaseIncremental(dbPath, cache.dbLastModified, {}, pluginDir);
-					
-					if (update && update.items.length > 0) {
-						// Merge updates into cache
-						cacheManager.updateCache(
-							update.items as CachedReference[],
-							update.collections,
-							update.updatedItemKeys
-						);
-						await cacheManager.saveCache();
-						cachedItems = cacheManager.getCache()!.items;
-						data = { items: cachedItems as Reference[], collections: update.collections };
-						if (this.plugin.settings.debugMode) console.debug("[BibNotes] Incremental update:", update.items.length, "items updated");
-					} else {
-						// No changes or failed incremental, do full refresh
-						data = await readZoteroDatabase(dbPath, pluginDir);
-						cacheManager.updateCache(data.items as CachedReference[], data.collections);
-						await cacheManager.saveCache();
-						cachedItems = data.items as CachedReference[];
-						if (this.plugin.settings.debugMode) console.debug("[BibNotes] Full refresh:", data.items.length, "items");
-					}
-				} else {
-					// No cache or first time, do full read
-					data = await readZoteroDatabase(dbPath, pluginDir);
-					cacheManager.updateCache(data.items as CachedReference[], data.collections);
-					await cacheManager.saveCache();
-					cachedItems = data.items as CachedReference[];
-					if (this.plugin.settings.debugMode) console.debug("[BibNotes] Initial cache:", data.items.length, "items");
-				}
+			const data = await this.plugin.loadZoteroData();
+			if (!data) {
+				return;
 			}
+			this.data = data;
 		} catch (e) {
 			new Notice(t().noticeDbReadFailed + (e as Error).message);
-			 
 			console.error(e);
 			return;
 		}
+
+		const data = this.data;
 
 		//const checkAdmonition  = this.app.plugins.getPlugin("obsidian-admonition")._loaded
 
@@ -479,7 +423,11 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 	 */
 	private collectRanges(text: string, keyword: string, ranges: Array<{start: number, end: number}>): void {
 		let pos = 0;
-		while ((pos = text.indexOf(keyword, pos)) !== -1) {
+		while (true) {
+			pos = text.indexOf(keyword, pos);
+			if (pos === -1) {
+				break;
+			}
 			ranges.push({ start: pos, end: pos + keyword.length });
 			pos += 1;
 		}
@@ -888,7 +836,11 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 
 		for (const keyword of keywords) {
 			let pos = 0;
-			while ((pos = lowerText.indexOf(keyword, pos)) !== -1) {
+			while (true) {
+				pos = lowerText.indexOf(keyword, pos);
+				if (pos === -1) {
+					break;
+				}
 				// Only add if keyword is 2+ characters
 				if (keyword.length >= 2) {
 					allRanges.push({ start: pos, end: pos + keyword.length });
@@ -953,7 +905,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 			await this.plugin.createNote(selectedEntry, this.data);
 
 			//if the note is the last one to be processed, then open it
-			if (indexNoteToBeProcessed == citeKeyToBeProcessed.length - 1) {
+			if (indexNoteToBeProcessed === citeKeyToBeProcessed.length - 1) {
 				openSelectedNote(
 					this.app,
 					selectedEntry,
@@ -973,7 +925,8 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 
 	// Enhanced search using cache data
 	searchItems(query: string): Reference[] {
-		const cacheManager = getCacheManager(this.app, this.plugin.settings.zoteroDbPath);
+		const dbPath = this.plugin.getEffectiveZoteroDbPath(false) ?? this.plugin.settings.zoteroDbPath;
+		const cacheManager = getCacheManager(this.app, dbPath);
 		return cacheManager.searchItems(query) as Reference[];
 	}
 }
@@ -990,24 +943,15 @@ export class UpdateLibraryModal extends Modal {
 		this.setContent("Updating...");
 		if (this.plugin.settings.debugMode) console.debug("[BibNotes] Updating Zotero library");
 
-		const dbPath = this.plugin.settings.zoteroDbPath;
-		if (!dbPath) {
-			new Notice(t().noticeDbNotConfigured);
-			return;
-		}
-
 		let data: ZoteroData;
-		// 获取插件目录的绝对路径
-		const adapter = this.app.vault.adapter;
-		const vaultBasePath = adapter instanceof FileSystemAdapter ? adapter.getBasePath() : "";
-		const pluginDir = vaultBasePath && this.plugin.manifest.dir 
-			? vaultBasePath + "/" + this.plugin.manifest.dir 
-			: this.plugin.manifest.dir || "";
 		try {
-			data = await readZoteroDatabase(dbPath, pluginDir);
+			const loadedData = await this.plugin.loadZoteroData();
+			if (!loadedData) {
+				return;
+			}
+			data = loadedData;
 		} catch (e) {
 			new Notice(t().noticeDbReadFailed + (e as Error).message);
-			 
 			console.error(e);
 			return;
 		}

@@ -21,7 +21,9 @@ import {
 	Collection,
 } from "./types";
 
-import { readZoteroDatabase } from "./zotero-db";
+import { readZoteroDatabase, readZoteroDatabaseIncremental, ZoteroData } from "./zotero-db";
+import { clearCacheManager, getCacheManager, CachedReference } from "./zotero-cache";
+import { resolveZoteroDatabasePath, ZoteroDbPathResolution } from "./zotero-path";
 
 import {
 	createAuthorKey,
@@ -45,6 +47,123 @@ import {
 
 export default class ZoteroDirectPlugin extends Plugin {
 	settings: ZoteroDirectSettings;
+
+	getResolvedZoteroDbPath(): ZoteroDbPathResolution {
+		return resolveZoteroDatabasePath(this.settings.zoteroDbPath);
+	}
+
+	getEffectiveZoteroDbPath(showNotice: boolean = true): string | null {
+		const resolved = this.getResolvedZoteroDbPath();
+		if (resolved.effectivePath) {
+			return resolved.effectivePath;
+		}
+
+		if (showNotice) {
+			new Notice(t().noticeDbNotConfigured);
+		}
+
+		return null;
+	}
+
+	getPluginDirPath(): string {
+		const vaultBasePath = this.app.vault.adapter instanceof FileSystemAdapter ? this.app.vault.adapter.getBasePath() : "";
+		return vaultBasePath && this.manifest.dir
+			? vaultBasePath + "/" + this.manifest.dir
+			: this.manifest.dir || "";
+	}
+
+	async loadZoteroData(forceFullRefresh: boolean = false): Promise<ZoteroData | null> {
+		const dbPath = this.getEffectiveZoteroDbPath();
+		if (!dbPath) {
+			return null;
+		}
+
+		const pluginDir = this.getPluginDirPath();
+		const cacheManager = getCacheManager(this.app, dbPath);
+		await cacheManager.loadCache();
+
+		const cache = cacheManager.getCache();
+		const hasChanges = cacheManager.hasDbChanged();
+
+		if (!forceFullRefresh && !hasChanges && cache) {
+			if (this.settings.debugMode) {
+				console.debug("[BibNotes] Using cached data:", cache.items.length, "items");
+			}
+
+			return {
+				items: cache.items as Reference[],
+				collections: cache.collections,
+			};
+		}
+
+		if (!forceFullRefresh && cache && cache.dbLastModified > 0) {
+			const update = await readZoteroDatabaseIncremental(dbPath, cache.dbLastModified, {}, pluginDir);
+
+			if (update && update.items.length > 0) {
+				cacheManager.updateCache(
+					update.items as CachedReference[],
+					update.collections,
+					update.updatedItemKeys
+				);
+				await cacheManager.saveCacheIncremental();
+
+				const updatedCache = cacheManager.getCache();
+				if (updatedCache) {
+					if (this.settings.debugMode) {
+						console.debug("[BibNotes] Incremental update:", update.items.length, "items updated");
+					}
+
+					return {
+						items: updatedCache.items as Reference[],
+						collections: update.collections,
+					};
+				}
+			}
+
+			if (cache) {
+				if (this.settings.debugMode) {
+					console.debug("[BibNotes] No incremental changes detected, using cache:", cache.items.length, "items");
+				}
+
+				return {
+					items: cache.items as Reference[],
+					collections: cache.collections,
+				};
+			}
+		}
+
+		const data = await readZoteroDatabase(dbPath, pluginDir);
+		cacheManager.updateCache(data.items as CachedReference[], data.collections);
+		await cacheManager.saveCache();
+
+		if (this.settings.debugMode) {
+			console.debug(
+				forceFullRefresh || !cache
+					? "[BibNotes] Full refresh:"
+					: "[BibNotes] Cache refreshed with full read:",
+				data.items.length,
+				"items"
+			);
+		}
+
+		return data;
+	}
+
+	async rebuildZoteroCache(): Promise<ZoteroData | null> {
+		const dbPath = this.getEffectiveZoteroDbPath();
+		if (!dbPath) {
+			return null;
+		}
+
+		clearCacheManager();
+		const cacheManager = getCacheManager(this.app, dbPath);
+		await cacheManager.clearCache();
+
+		const data = await readZoteroDatabase(dbPath, this.getPluginDirPath());
+		cacheManager.updateCache(data.items as CachedReference[], data.collections);
+		await cacheManager.saveCache();
+		return data;
+	}
 
 	async onload() {
 		await this.loadSettings();
@@ -750,25 +869,16 @@ export default class ZoteroDirectPlugin extends Plugin {
 	async updateCurrentNote(){
 		if (this.settings.debugMode) console.debug("[BibNotes] Updating Current Note");
 
-		// Check if the database path is set
-		const dbPath = this.settings.zoteroDbPath;
-		if (!dbPath) {
-			new Notice(t().noticeDbNotConfigured);
+		let data: ZoteroData | null = null;
+		try {
+			data = await this.loadZoteroData();
+		} catch (e) {
+			new Notice(t().noticeDbReadFailed + (e as Error).message);
+			console.error(e);
 			return;
 		}
 
-		let data;
-		// 获取插件目录的绝对路径
-		const vaultBasePath = this.app.vault.adapter instanceof FileSystemAdapter ? this.app.vault.adapter.getBasePath() : "";
-		const pluginDir = vaultBasePath && this.manifest.dir 
-			? vaultBasePath + "/" + this.manifest.dir 
-			: this.manifest.dir || "";
-		try {
-			data = await readZoteroDatabase(dbPath, pluginDir);
-		} catch (e) {
-			new Notice(t().noticeDbReadFailed + (e as Error).message);
-			 
-			console.error(e);
+		if (!data) {
 			return;
 		}
 
@@ -783,14 +893,14 @@ export default class ZoteroDirectPlugin extends Plugin {
 
 		const citeKey = parseCiteKeyFromNoteName(currentNoteName, noteTitleFormat);
 	
-		if (citeKey != null){
+		if (citeKey !== null){
 			// find entry in library using citeKey
 			const entryIndex = data.items.findIndex(
 				(item: { citationKey: string }) =>
 					item.citationKey ===
 					citeKey
 			);
-			if (entryIndex!=-1){
+			if (entryIndex !== -1){
 				// update current note
 				const currentEntry = data.items[entryIndex];
 			if (!currentEntry) {

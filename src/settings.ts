@@ -1,7 +1,8 @@
 import MyPlugin from "./main";
-import { App, PluginSettingTab, Setting, Notice, FileSystemAdapter, debounce } from "obsidian";
+import { App, PluginSettingTab, Setting, Notice, debounce } from "obsidian";
 import { FolderSuggest } from "./suggesters/FolderSuggester"
 import { t } from "./i18n";
+import { resolveZoteroDatabasePath } from "./zotero-path";
 
 
 export class SettingTab extends PluginSettingTab {
@@ -16,9 +17,10 @@ export class SettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
-	display(): void {
+		display(): void {
 		const { containerEl, plugin } = this;
 		const { settings } = plugin;
+		const zoteroDb = resolveZoteroDatabasePath(settings.zoteroDbPath);
 
 		containerEl.empty();
 		const s = t();
@@ -26,18 +28,49 @@ export class SettingTab extends PluginSettingTab {
 		new Setting(containerEl).setName(s.pluginTitle).setHeading();
 		new Setting(containerEl).setName(s.sectionImportLibrary).setHeading();
 
-		new Setting(containerEl)
+		const zoteroStatusSetting = new Setting(containerEl)
 			.setName(s.zoteroDbPathName)
-			.setDesc(s.zoteroDbPathDesc)
-			.addText((text) =>
+			.setDesc(
+				zoteroDb.source === "manual"
+					? s.zoteroDbManualOverrideDesc
+					: zoteroDb.defaultPath
+						? s.zoteroDbAutoDetectedDesc
+						: s.zoteroDbDefaultNotFoundDesc
+			)
+			.addText((text) => {
 				text
+					.setDisabled(true)
 					.setPlaceholder(s.zoteroDbPathPlaceholder)
-					.setValue(settings.zoteroDbPath)
-					.onChange((value) => {
-						settings.zoteroDbPath = value;
-						this.debouncedSave();
-					})
-			);
+					.setValue(zoteroDb.effectivePath ?? "");
+			});
+
+		if (zoteroDb.source === "manual") {
+			zoteroStatusSetting.addExtraButton((button) => {
+				button
+					.setIcon("reset")
+					.setTooltip(s.zoteroDbClearManualPathTooltip)
+					.onClick(async () => {
+						settings.zoteroDbPath = "";
+						await plugin.saveSettings();
+						this.display();
+					});
+			});
+		}
+
+		if (zoteroDb.shouldShowManualPathSetting) {
+			new Setting(containerEl)
+				.setName(s.zoteroDbManualPathName)
+				.setDesc(s.zoteroDbPathDesc)
+				.addText((text) =>
+					text
+						.setPlaceholder(s.zoteroDbPathPlaceholder)
+						.setValue(settings.zoteroDbPath)
+						.onChange((value) => {
+							settings.zoteroDbPath = value;
+							this.debouncedSave();
+						})
+				);
+		}
 
 		new Setting(containerEl)
 			.setName(s.cacheStatusName)
@@ -46,27 +79,17 @@ export class SettingTab extends PluginSettingTab {
 				button.setIcon("sync")
 					.setTooltip(s.cacheRebuildTooltip)
 					.onClick(async () => {
-						if (!settings.zoteroDbPath) {
+						const currentZoteroDb = resolveZoteroDatabasePath(settings.zoteroDbPath);
+						if (!currentZoteroDb.effectivePath) {
 							new Notice(s.cacheSetPathFirst);
 							return;
 						}
 						new Notice(s.cacheRebuilding);
 						try {
-							const { clearCacheManager, getCacheManager } = await import("./zotero-cache");
-							const { readZoteroDatabase } = await import("./zotero-db");
-							// Clear old cache
-							clearCacheManager();
-							const cacheManager = getCacheManager(this.app, settings.zoteroDbPath);
-						await cacheManager.clearCache();
-							// Get plugin directory path
-							const vaultBasePath = this.app.vault.adapter instanceof FileSystemAdapter ? this.app.vault.adapter.getBasePath() : "";
-							const pluginDir = vaultBasePath && this.plugin.manifest.dir
-							? vaultBasePath + "/" + this.plugin.manifest.dir
-								: this.plugin.manifest.dir || "";
-							// Full read from Zotero database
-							const data = await readZoteroDatabase(settings.zoteroDbPath, pluginDir);
-							cacheManager.updateCache(data.items, data.collections);
-							await cacheManager.saveCache();
+							const data = await this.plugin.rebuildZoteroCache();
+							if (!data) {
+								return;
+							}
 							new Notice(s.cacheRebuiltSuccess(data.items.length));
 							this.display();
 						} catch (e) {
@@ -77,7 +100,8 @@ export class SettingTab extends PluginSettingTab {
 			.addText((text) => {
 				text.setDisabled(true);
 				void import("./zotero-cache").then(({ getCacheManager }) => {
-					const cacheManager = getCacheManager(this.app, settings.zoteroDbPath);
+					const currentZoteroDb = resolveZoteroDatabasePath(settings.zoteroDbPath);
+					const cacheManager = getCacheManager(this.app, currentZoteroDb.effectivePath ?? settings.zoteroDbPath);
 					const stats = cacheManager.getCacheStats();
 					if (stats.itemCount > 0) {
 						text.setValue(s.cacheItemsCached(stats.itemCount));
@@ -234,7 +258,7 @@ export class SettingTab extends PluginSettingTab {
 				);
 			});
 
-		if (settings.saveManualEdits == "Select Section") {
+		if (settings.saveManualEdits === "Select Section") {
 			new Setting(containerEl)
 				.setName(s.saveManualEditsStartName)
 				.setDesc(s.saveManualEditsStartDesc)

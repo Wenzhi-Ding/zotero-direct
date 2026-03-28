@@ -32,26 +32,28 @@
 
 ### 配置步骤
 
-1. 在插件设置中，配置您的 **Zotero 数据库路径**：
-   - Windows: `C:\Users\<用户名>\Zotero\zotero.sqlite`
-   - macOS: `~/Library/Application Support/Zotero/Profiles/<随机字符串>/zotero.sqlite`
-   - Linux: `~/.zotero/zotero/<随机字符串>/zotero.sqlite`
+1. 插件会**优先自动检测 Zotero 数据库**的默认位置。
+   - 常见默认位置包括：
+     - Windows: `C:\Users\<用户名>\Zotero\zotero.sqlite`
+     - macOS: `~/Library/Application Support/Zotero/Profiles/<随机字符串>/zotero.sqlite`
+     - Linux: `~/.zotero/zotero/<随机字符串>/zotero.sqlite`
+   - 只有在默认位置找不到数据库时，设置页才会要求您手动配置 **Zotero 数据库路径**。
 
 2. 设置文献笔记的**导出路径**：指定 Obsidian vault 中的文件夹（如 `Literature Notes`）
 
 3. （可选）配置其他模板和格式选项
 
-> **提示**：插件会自动读取您的 Zotero 数据库，实时获取最新的文献信息。
+> **提示**：每次打开搜索框时，插件都会检查 Zotero 数据库是否发生变化；如果发现更新，会自动刷新缓存。`Update Library` 和 `Update Current Note` 命令也遵循同样的路径规则：如果您手动设置了数据库路径，就优先使用手动路径；否则就使用自动检测到的默认位置。
 
 ## 命令
 
 插件提供两个命令：
 
-- **Create/Update Literature Note**: 选择此命令后，您可以从 Zotero 库中选择一篇文献。如果该文献尚未导入，将生成新笔记；如果已存在，将更新笔记内容（不会覆盖您在 Obsidian 中手动添加的注释）。第一个选项（"Entire Library"）可用于创建/更新库中所有文献的笔记。
+- **Create/Update Literature Note**: 选择此命令后，您可以从 Zotero 库中选择一篇文献。打开搜索框时，插件会先检查 Zotero 数据库是否有变化，并在必要时先刷新缓存，以确保搜索结果尽可能及时。如果该文献尚未导入，将生成新笔记；如果已存在，将更新笔记内容（不会覆盖您在 Obsidian 中手动添加的注释）。
 
 ![](/images/SelectCommandExample.png)
 
-- **Update Library**: 选择此命令后，插件将生成/更新自上次运行该命令以来在 Zotero 中修改过的所有笔记。如果是第一次运行，将为导入的文献库中的所有条目创建/更新文献笔记。
+- **Update Library**: 选择此命令后，插件会优先使用您手动设置的 Zotero 数据库路径；如果没有手动设置，则使用自动检测到的默认数据库位置。随后，插件将生成/更新自上次运行该命令以来在 Zotero 中修改过的所有笔记。如果是第一次运行，将为导入的文献库中的所有条目创建/更新文献笔记。
 
 ## 创建文献笔记
 

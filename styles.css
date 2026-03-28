@@ -7,7 +7,7 @@
    ───────────────────────────────────────────────────────────────────────────── */
 
 /* Main suggestion container */
-.suggestion-container {
+.bibnotes-modal .suggestion-container {
     --suggestion-bg: var(--background-primary, #1e1e1e);
     --suggestion-bg-hover: var(--background-modifier-hover, rgba(255, 255, 255, 0.075));
     --suggestion-border: var(--background-modifier-border, #333);
@@ -32,7 +32,7 @@
    ───────────────────────────────────────────────────────────────────────────── */
 
 /* Base suggestion item styling */
-.suggestion-item {
+.bibnotes-modal .suggestion-item {
     padding: 0;
     margin: 0;
     border-bottom: 1px solid var(--suggestion-divider);
@@ -40,15 +40,15 @@
     cursor: pointer;
 }
 
-.suggestion-item:last-child {
+.bibnotes-modal .suggestion-item:last-child {
     border-bottom: none;
 }
 
-.suggestion-item.is-selected {
+.bibnotes-modal .suggestion-item.is-selected {
     background: var(--suggestion-bg-hover) !important;
 }
 
-.suggestion-item:hover {
+.bibnotes-modal .suggestion-item:hover {
     background: var(--background-modifier-active-hover, rgba(255, 255, 255, 0.05)) !important;
 }
 
@@ -240,33 +240,33 @@
    Selected State Enhancements
    ───────────────────────────────────────────────────────────────────────────── */
 
-.suggestion-item.is-selected .bibnotes-suggestion-title {
+.bibnotes-modal .suggestion-item.is-selected .bibnotes-suggestion-title {
     color: var(--text-normal, #fff);
 }
 
-.suggestion-item.is-selected .bibnotes-suggestion-authors {
+.bibnotes-modal .suggestion-item.is-selected .bibnotes-suggestion-authors {
     color: var(--text-muted, #aaa);
 }
 
-.suggestion-item.is-selected .bibnotes-suggestion-journal {
+.bibnotes-modal .suggestion-item.is-selected .bibnotes-suggestion-journal {
     color: var(--text-muted, #999);
 }
 
-.suggestion-item.is-selected .bibnotes-suggestion-citekey {
+.bibnotes-modal .suggestion-item.is-selected .bibnotes-suggestion-citekey {
     color: var(--text-faint, #777);
     border-color: var(--background-modifier-border-hover, rgba(255, 255, 255, 0.15));
 }
 
-.suggestion-item.is-selected .bibnotes-suggestion-context {
+.bibnotes-modal .suggestion-item.is-selected .bibnotes-suggestion-context {
     color: var(--text-faint, #666);
 }
 
-.suggestion-item:hover .bibnotes-suggestion-context {
+.bibnotes-modal .suggestion-item:hover .bibnotes-suggestion-context {
     color: var(--text-faint, #666);
 }
 
-.suggestion-item.is-selected .bibnotes-suggestion-context .bibnotes-suggestion-highlight,
-.suggestion-item:hover .bibnotes-suggestion-context .bibnotes-suggestion-highlight {
+.bibnotes-modal .suggestion-item.is-selected .bibnotes-suggestion-context .bibnotes-suggestion-highlight,
+.bibnotes-modal .suggestion-item:hover .bibnotes-suggestion-context .bibnotes-suggestion-highlight {
     background: linear-gradient(180deg, 
         transparent 0%, 
         var(--text-highlight-bg, rgba(255, 215, 0, 0.3)) 0%, 
@@ -291,23 +291,23 @@
    Scrollbar Styling
    ───────────────────────────────────────────────────────────────────────────── */
 
-.suggestion-container::-webkit-scrollbar {
+.bibnotes-modal .suggestion-container::-webkit-scrollbar {
     width: 8px;
 }
 
-.suggestion-container::-webkit-scrollbar-track {
+.bibnotes-modal .suggestion-container::-webkit-scrollbar-track {
     background: transparent;
     border-radius: 0 12px 12px 0;
 }
 
-.suggestion-container::-webkit-scrollbar-thumb {
+.bibnotes-modal .suggestion-container::-webkit-scrollbar-thumb {
     background: var(--scrollbar-thumb-bg, rgba(255, 255, 255, 0.15));
     border-radius: 4px;
     border: 2px solid transparent;
     background-clip: padding-box;
 }
 
-.suggestion-container::-webkit-scrollbar-thumb:hover {
+.bibnotes-modal .suggestion-container::-webkit-scrollbar-thumb:hover {
     background: var(--scrollbar-thumb-bg-hover, rgba(255, 255, 255, 0.25));
 }
 
@@ -326,7 +326,7 @@
     }
 }
 
-.suggestion-container {
+.bibnotes-modal .suggestion-container {
     animation: bibnotes-fadeIn 0.2s ease-out;
 }
 
@@ -358,7 +358,7 @@
    Focus Ring for Accessibility
    ───────────────────────────────────────────────────────────────────────────── */
 
-.suggestion-item:focus-visible {
+.bibnotes-modal .suggestion-item:focus-visible {
     outline: 2px solid var(--interactive-accent, #7ee787);
     outline-offset: -2px;
 }
