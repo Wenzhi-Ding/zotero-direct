@@ -120,7 +120,7 @@ export default class ZoteroDirectPlugin extends Plugin {
 				}
 			}
 
-			if (cache) {
+		if (!hasChanges && cache) {
 				if (this.settings.debugMode) {
 					console.debug("[BibNotes] No incremental changes detected, using cache:", cache.items.length, "items");
 				}
@@ -130,6 +130,8 @@ export default class ZoteroDirectPlugin extends Plugin {
 					collections: cache.collections,
 				};
 			}
+			// hasChanges=true but incremental returned nothing (e.g. items only in WAL,
+			// or edge-case timing) → fall through to full re-read instead of serving stale data.
 		}
 
 		const data = await readZoteroDatabase(dbPath, pluginDir);

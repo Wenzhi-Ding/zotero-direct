@@ -119,7 +119,7 @@ function query(db: SqlJsDatabase, sql: string): Record<string, unknown>[] {
 	const { columns, values } = result;
 	return values.map((row: SqlJsValue[]) => {
 		const obj: Record<string, unknown> = {};
-		columns.forEach((col: string, i: number) => (obj[col] = row[i]));
+		columns.forEach((col: string, i: number) => { obj[col] = row[i]; });
 		return obj;
 	});
 }
@@ -235,8 +235,12 @@ export async function readZoteroDatabaseIncremental(
 	}
 
 	try {
-		// 1. Get items modified since timestamp
-		const sinceDate = new Date(sinceTimestamp).toISOString();
+		// Zotero stores dates as "YYYY-MM-DD HH:MM:SS" (UTC). ISO format ("…T…Z") breaks
+		// SQLite string comparison: ' ' (0x20) < 'T' (0x54), so every Zotero date
+		// looks "earlier" than any ISO threshold → incremental query always returns 0 rows.
+		const d = new Date(sinceTimestamp);
+		const pad = (n: number) => String(n).padStart(2, '0');
+		const sinceDate = `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
 		const items = query(
 			db,
 			`SELECT i.itemID, it.typeName AS itemType, i.key AS itemKey,
