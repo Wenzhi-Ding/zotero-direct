@@ -103,7 +103,7 @@ export class ZoteroCacheManager {
 				try {
 					await this.app.vault.adapter.remove(this.legacyCacheFilePath);
 				} catch { /* ignore */ }
-				console.info("[BibNotes] Migrated cache from JSON to JSONL format");
+				console.debug("[BibNotes] Migrated cache from JSON to JSONL format");
 				return this.cache;
 			}
 
