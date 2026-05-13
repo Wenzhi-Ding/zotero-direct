@@ -72,7 +72,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 	}
 	// Function used to move the cursor in the search bar when the modal is launched
 	focusInput() {
-		const el = document.getElementsByClassName("prompt-input")[0] as HTMLElement | undefined;
+		const el = activeDocument.getElementsByClassName("prompt-input")[0] as HTMLElement | undefined;
 		el?.focus();
 	}
 	async onOpen() {
@@ -161,7 +161,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 		this.buildSearchIndex();
 
 		// 数据加载完成后，延迟触发一次建议刷新
-		requestAnimationFrame(() => {
+		window.requestAnimationFrame(() => {
 			if (this.inputEl) {
 				this.inputEl.dispatchEvent(new Event('input'));
 			}
@@ -202,7 +202,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 	 */
 	private cancelPendingSearch(): void {
 		if (this.searchDebounceTimer) {
-			clearTimeout(this.searchDebounceTimer);
+			window.clearTimeout(this.searchDebounceTimer);
 			this.searchDebounceTimer = null;
 		}
 	}
@@ -492,7 +492,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 			// After layout, dynamically truncate to fit one line
 			if (allAuthors.length > 2) {
 				const truncRanges = authorDisplayRanges.length > 0 ? authorDisplayRanges : undefined;
-				requestAnimationFrame(() => {
+				window.requestAnimationFrame(() => {
 					this.truncateAuthorsToFit(authorsEl, allAuthors, truncRanges);
 				});
 			}

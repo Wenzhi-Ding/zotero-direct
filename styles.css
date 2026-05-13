@@ -7,14 +7,25 @@
    ───────────────────────────────────────────────────────────────────────────── */
 
 /* Main suggestion container */
+@keyframes bibnotes-fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .bibnotes-modal .suggestion-container {
     --suggestion-bg: var(--background-primary, #1e1e1e);
     --suggestion-bg-hover: var(--background-modifier-hover, rgba(255, 255, 255, 0.075));
-    --suggestion-border: var(--background-modifier-border, #333);
+    --suggestion-border: var(--background-modifier-border, #333333);
     --suggestion-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     --suggestion-radius: 12px;
     --suggestion-item-padding: 12px 16px;
-    --suggestion-divider: var(--background-modifier-border-hover, #444);
+    --suggestion-divider: var(--background-modifier-border-hover, #444444);
     --suggestion-gap: 6px;
 
     background: var(--suggestion-bg);
@@ -25,6 +36,7 @@
     -webkit-backdrop-filter: blur(20px);
     max-height: 600px;
     overflow-y: auto;
+    animation: bibnotes-fadeIn 0.2s ease-out;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -44,12 +56,12 @@
     border-bottom: none;
 }
 
-.bibnotes-modal .suggestion-item.is-selected {
-    background: var(--suggestion-bg-hover) !important;
+.bibnotes-modal .suggestion-item.is-selected.is-selected {
+    background: var(--suggestion-bg-hover);
 }
 
-.bibnotes-modal .suggestion-item:hover {
-    background: var(--background-modifier-active-hover, rgba(255, 255, 255, 0.05)) !important;
+.bibnotes-modal .suggestion-item:hover:hover {
+    background: var(--background-modifier-active-hover, rgba(255, 255, 255, 0.05));
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -99,7 +111,7 @@
 /* Authors - single line, dynamically truncated */
 .bibnotes-suggestion-authors {
     font-size: 13px;
-    color: var(--text-muted, #888);
+    color: var(--text-muted, #888888);
     font-weight: 500;
     line-height: 1.4;
     white-space: nowrap;
@@ -129,7 +141,7 @@
 
 .bibnotes-suggestion-journal {
     font-size: 12px;
-    color: var(--text-muted, #888);
+    color: var(--text-muted, #888888);
     font-weight: 400;
     line-height: 1.4;
     white-space: nowrap;
@@ -143,7 +155,7 @@
     font-size: 11px;
     font-family: var(--font-monospace, 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace);
     font-weight: 400;
-    color: var(--text-faint, #666);
+    color: var(--text-faint, #666666);
     background: transparent;
     padding: 2px 6px;
     border-radius: 4px;
@@ -170,7 +182,7 @@
 
 .bibnotes-suggestion-context {
     font-size: 11px;
-    color: var(--text-faint, #666);
+    color: var(--text-faint, #666666);
     font-weight: 400;
     line-height: 1.4;
     font-style: italic;
@@ -186,12 +198,12 @@
 
 .bibnotes-context-abstract::before {
     content: '"';
-    color: var(--text-faint, #666);
+    color: var(--text-faint, #666666);
 }
 
 .bibnotes-context-abstract::after {
     content: '"';
-    color: var(--text-faint, #666);
+    color: var(--text-faint, #666666);
 }
 
 .bibnotes-context-tags {
@@ -209,7 +221,7 @@
         var(--text-highlight-bg, rgba(255, 215, 0, 0.3)) 100%, 
         transparent 100%
     );
-    color: var(--text-normal, #fff);
+    color: var(--text-normal, #ffffff);
     font-weight: 600;
     border-radius: 2px;
     padding: 0 1px;
@@ -241,28 +253,28 @@
    ───────────────────────────────────────────────────────────────────────────── */
 
 .bibnotes-modal .suggestion-item.is-selected .bibnotes-suggestion-title {
-    color: var(--text-normal, #fff);
+    color: var(--text-normal, #ffffff);
 }
 
 .bibnotes-modal .suggestion-item.is-selected .bibnotes-suggestion-authors {
-    color: var(--text-muted, #aaa);
+    color: var(--text-muted, #aaaaaa);
 }
 
 .bibnotes-modal .suggestion-item.is-selected .bibnotes-suggestion-journal {
-    color: var(--text-muted, #999);
+    color: var(--text-muted, #999999);
 }
 
 .bibnotes-modal .suggestion-item.is-selected .bibnotes-suggestion-citekey {
-    color: var(--text-faint, #777);
+    color: var(--text-faint, #777777);
     border-color: var(--background-modifier-border-hover, rgba(255, 255, 255, 0.15));
 }
 
 .bibnotes-modal .suggestion-item.is-selected .bibnotes-suggestion-context {
-    color: var(--text-faint, #666);
+    color: var(--text-faint, #666666);
 }
 
 .bibnotes-modal .suggestion-item:hover .bibnotes-suggestion-context {
-    color: var(--text-faint, #666);
+    color: var(--text-faint, #666666);
 }
 
 .bibnotes-modal .suggestion-item.is-selected .bibnotes-suggestion-context .bibnotes-suggestion-highlight,
@@ -273,7 +285,7 @@
         var(--text-highlight-bg, rgba(255, 215, 0, 0.3)) 100%, 
         transparent 100%
     );
-    color: var(--text-normal, #fff);
+    color: var(--text-normal, #ffffff);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -283,7 +295,7 @@
 .bibnotes-suggestion-empty {
     padding: 24px 16px;
     text-align: center;
-    color: var(--text-muted, #888);
+    color: var(--text-muted, #888888);
     font-size: 13px;
 }
 
@@ -315,21 +327,6 @@
    Animations
    ───────────────────────────────────────────────────────────────────────────── */
 
-@keyframes bibnotes-fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-8px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.bibnotes-modal .suggestion-container {
-    animation: bibnotes-fadeIn 0.2s ease-out;
-}
-
 /* ─────────────────────────────────────────────────────────────────────────────
    Responsive Adjustments
    ───────────────────────────────────────────────────────────────────────────── */
@@ -352,6 +349,14 @@
         font-size: 10px;
         padding: 2px 6px;
     }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Settings: Template textarea full width
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.bibnotes-settings-template-textarea {
+    width: 100%;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
