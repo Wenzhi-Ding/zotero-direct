@@ -167,7 +167,7 @@ export class SettingTab extends PluginSettingTab {
 				.addTextArea((text) => {
 					text.inputEl.rows = 10;
 					// this is not strictly necessary, but it makes it a lot easier to read long lines
-					text.inputEl.setCssProps({ "width": "100%" });
+					text.inputEl.addClass("bibnotes-settings-template-textarea");
 					text.setValue(settings.templateContent).onChange(
 						(value) => {
 							settings.templateContent = value;

@@ -1,4 +1,4 @@
-import { Plugin, Notice, FileSystemAdapter, TFile, normalizePath } from "obsidian";
+import { Plugin, Notice, TFile, normalizePath } from "obsidian";
 
 import 'turndown'
 
@@ -65,20 +65,12 @@ export default class ZoteroDirectPlugin extends Plugin {
 		return null;
 	}
 
-	getPluginDirPath(): string {
-		const vaultBasePath = this.app.vault.adapter instanceof FileSystemAdapter ? this.app.vault.adapter.getBasePath() : "";
-		return vaultBasePath && this.manifest.dir
-			? vaultBasePath + "/" + this.manifest.dir
-			: this.manifest.dir || "";
-	}
-
 	async loadZoteroData(forceFullRefresh: boolean = false): Promise<ZoteroData | null> {
 		const dbPath = this.getEffectiveZoteroDbPath();
 		if (!dbPath) {
 			return null;
 		}
 
-		const pluginDir = this.getPluginDirPath();
 		const cacheManager = getCacheManager(this.app, dbPath);
 		await cacheManager.loadCache();
 
@@ -97,7 +89,7 @@ export default class ZoteroDirectPlugin extends Plugin {
 		}
 
 		if (!forceFullRefresh && cache && cache.dbLastModified > 0) {
-			const update = await readZoteroDatabaseIncremental(dbPath, cache.dbLastModified, {}, pluginDir);
+			const update = await readZoteroDatabaseIncremental(dbPath, cache.dbLastModified, {});
 
 			if (update && update.items.length > 0) {
 				cacheManager.updateCache(
@@ -134,7 +126,7 @@ export default class ZoteroDirectPlugin extends Plugin {
 			// or edge-case timing) → fall through to full re-read instead of serving stale data.
 		}
 
-		const data = await readZoteroDatabase(dbPath, pluginDir);
+		const data = await readZoteroDatabase(dbPath);
 		cacheManager.updateCache(data.items as CachedReference[], data.collections);
 		await cacheManager.saveCache();
 
@@ -161,7 +153,7 @@ export default class ZoteroDirectPlugin extends Plugin {
 		const cacheManager = getCacheManager(this.app, dbPath);
 		await cacheManager.clearCache();
 
-		const data = await readZoteroDatabase(dbPath, this.getPluginDirPath());
+		const data = await readZoteroDatabase(dbPath);
 		cacheManager.updateCache(data.items as CachedReference[], data.collections);
 		await cacheManager.saveCache();
 		return data;

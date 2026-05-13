@@ -14,6 +14,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { Reference, Collection } from "./types";
+import initSqlJs from "sql.js";
 
 // ── Helper: safely convert unknown to string ─────────────────────────
 
@@ -38,73 +39,17 @@ interface SqlJsStatic {
 
 // ── sql.js singleton ─────────────────────────────────────────────────
 
-interface GlobalWithSqlJs {
-	initSqlJs?: (config: { wasmBinary: ArrayBuffer }) => Promise<SqlJsStatic>;
-}
-
 let cachedSqlJs: SqlJsStatic | null = null;
 let sqlJsLoadingPromise: Promise<SqlJsStatic> | null = null;
 
-/**
- * 懒加载 sql.js - 从插件目录动态加载 sql-wasm.js
- * 这样可以避免将 sql.js 打包进 main.js，大幅减小体积
- */
-async function loadSqlJsFromPluginDir(pluginDir: string): Promise<SqlJsStatic> {
-	// 预先读取 wasm 二进制文件，避免 sql.js 内部 fetch() 加载本地路径失败
-	const wasmPath = path.join(pluginDir, "sql-wasm.wasm");
-	if (!fs.existsSync(wasmPath)) {
-		throw new Error(`缺少 sql-wasm.wasm 文件，请确保文件存在于: ${wasmPath}`);
-	}
-	const wasmBinary = fs.readFileSync(wasmPath).buffer;
-
-	// 检查全局是否已加载
-	const g = globalThis as unknown as GlobalWithSqlJs;
-	if (g.initSqlJs) {
-		return g.initSqlJs({ wasmBinary });
-	}
-
-	// 读取 sql-wasm.js 文件内容
-	const sqlJsPath = path.join(pluginDir, "sql-wasm.js");
-	if (!fs.existsSync(sqlJsPath)) {
-		throw new Error(`缺少 sql-wasm.js 文件，请确保文件存在于: ${sqlJsPath}`);
-	}
-
-	const sqlJsContent = fs.readFileSync(sqlJsPath, "utf-8");
-
-	// 创建一个函数来执行 sql-wasm.js 代码
-	// 关键：暂时屏蔽 module/exports，让 UMD 格式挂载 initSqlJs 到全局
-	// eslint-disable-next-line @typescript-eslint/no-implied-eval -- Loading sql-wasm.js UMD module requires dynamic code evaluation
-	const loader = new Function('globalThis', 'window', 'global', 'module', 'exports', `
-		${sqlJsContent}
-		return typeof initSqlJs !== 'undefined' ? initSqlJs : undefined;
-	`) as (...args: unknown[]) => InitSqlJsFn | undefined;
-
-	type InitSqlJsFn = (config: { wasmBinary: ArrayBuffer }) => Promise<SqlJsStatic>;
-	const initSqlJs = loader(globalThis, globalThis, globalThis, undefined, undefined);
-
-	if (!initSqlJs) {
-		throw new Error("sql-wasm.js 加载失败，未找到 initSqlJs 函数");
-	}
-
-	// 挂载到 globalThis，供后续使用
-	(globalThis as unknown as GlobalWithSqlJs).initSqlJs = initSqlJs;
-
-	return await initSqlJs({ wasmBinary });
-}
-
-async function initSql(pluginDir?: string): Promise<SqlJsStatic> {
+async function initSql(): Promise<SqlJsStatic> {
 	if (cachedSqlJs) return cachedSqlJs;
-	
-	// 防止重复加载
-	if (sqlJsLoadingPromise) {
-		return sqlJsLoadingPromise;
-	}
+	if (sqlJsLoadingPromise) return sqlJsLoadingPromise;
 
-	if (!pluginDir) {
-		throw new Error("首次加载 sql.js 需要提供 pluginDir 参数");
-	}
+	sqlJsLoadingPromise = initSqlJs({
+		locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/sql.js/dist/${file}`
+	}) as unknown as Promise<SqlJsStatic>;
 
-	sqlJsLoadingPromise = loadSqlJsFromPluginDir(pluginDir);
 	cachedSqlJs = await sqlJsLoadingPromise;
 	return cachedSqlJs;
 }
@@ -168,12 +113,12 @@ export function getDbModificationTime(dbPath: string): number {
  * Read the Zotero SQLite database and return items + collections
  * in the same shape the rest of the plugin expects.
  */
-export async function readZoteroDatabase(dbPath: string, pluginDir: string): Promise<ZoteroData> {
+export async function readZoteroDatabase(dbPath: string): Promise<ZoteroData> {
 	if (!fs.existsSync(dbPath)) {
 		throw new Error("Zotero database not found at: " + dbPath);
 	}
 
-	const SQL = await initSql(pluginDir);
+	const SQL = await initSql();
 	const buffer = fs.readFileSync(dbPath);
 	const db = new SQL.Database(new Uint8Array(buffer));
 
@@ -208,13 +153,12 @@ export async function readZoteroDatabaseIncremental(
 	dbPath: string,
 	sinceTimestamp: number,
 	bbtCiteKeys: Record<number, string> = {},
-	pluginDir: string = ""
 ): Promise<IncrementalUpdate | null> {
 	if (!fs.existsSync(dbPath)) {
 		throw new Error("Zotero database not found at: " + dbPath);
 	}
 
-	const SQL = await initSql(pluginDir);
+	const SQL = await initSql();
 	const buffer = fs.readFileSync(dbPath);
 	const db = new SQL.Database(new Uint8Array(buffer));
 

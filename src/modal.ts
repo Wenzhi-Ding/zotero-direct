@@ -72,7 +72,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 	}
 	// Function used to move the cursor in the search bar when the modal is launched
 	focusInput() {
-		const el = document.getElementsByClassName("prompt-input")[0] as HTMLElement | undefined;
+		const el = activeDocument.getElementsByClassName("prompt-input")[0] as HTMLElement | undefined;
 		el?.focus();
 	}
 	async onOpen() {
@@ -202,7 +202,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 	 */
 	private cancelPendingSearch(): void {
 		if (this.searchDebounceTimer) {
-			clearTimeout(this.searchDebounceTimer);
+			activeWindow.clearTimeout(this.searchDebounceTimer);
 			this.searchDebounceTimer = null;
 		}
 	}
@@ -237,7 +237,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 
 		// Schedule actual search after debounce (non-blocking)
 		const capturedQuery = query;
-		this.searchDebounceTimer = window.setTimeout(() => {
+		this.searchDebounceTimer = activeWindow.setTimeout(() => {
 			this.searchDebounceTimer = null;
 			this.searchCache = this.performSearch(capturedQuery);
 			this.lastSearchQuery = capturedQuery;

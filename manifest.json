@@ -2,7 +2,7 @@
   "id": "zotero-direct",
   "name": "Zotero Direct",
   "version": "0.10.0",
-  "minAppVersion": "1.0.0",
+  "minAppVersion": "1.4.10",
   "description": "Plugin to import and format metadata from Zotero.",
   "author": "Wenzhi Ding",
   "authorUrl": "https://www.wenzhi-ding.com",

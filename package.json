@@ -18,7 +18,6 @@
 	"devDependencies": {
 		"@eslint/js": "^9.30.1",
 		"@types/node": "^22.0.0",
-		"builtin-modules": "^4.0.0",
 		"esbuild": "^0.25.0",
 		"eslint": "^9.39.2",
 		"eslint-plugin-obsidianmd": "^0.1.9",
@@ -31,11 +30,7 @@
 	},
 	"dependencies": {
 		"@popperjs/core": "^2.11.2",
+		"sql.js": "^1.11.0",
 		"turndown": "^7.1.1"
-	},
-	"knip": {
-		"ignore": [
-			"sql-wasm.js"
-		]
 	}
 }

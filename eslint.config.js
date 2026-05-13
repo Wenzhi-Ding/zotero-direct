@@ -5,7 +5,7 @@ import obsidianmd from "eslint-plugin-obsidianmd";
 
 export default defineConfig([
   {
-    ignores: ["eslint.config.js", "main.js", "sql-wasm.js"],
+    ignores: ["eslint.config.js", "main.js"],
   },
   ...obsidianmd.configs.recommended,
   {
@@ -15,12 +15,9 @@ export default defineConfig([
       parserOptions: { project: "./tsconfig.json" },
       globals: {
         console: "readonly",
-        document: "readonly",
-        window: "readonly",
-        globalThis: "readonly",
+        activeDocument: "readonly",
+        activeWindow: "readonly",
         requestAnimationFrame: "readonly",
-        clearTimeout: "readonly",
-        setTimeout: "readonly",
       },
     },
 
