@@ -58,7 +58,7 @@ function getProfileDatabaseCandidates(profileRoot: string): string[] {
 export function getDefaultZoteroDatabaseCandidates(): string[] {
 	const homeDir = os.homedir();
 	const candidates: string[] = [path.join(homeDir, "Zotero", "zotero.sqlite")];
-	const appData = (globalThis as { process?: { env?: { APPDATA?: string } } }).process?.env?.APPDATA;
+	const appData = (window as { process?: { env?: { APPDATA?: string } } }).process?.env?.APPDATA;
 
 	if (Platform.isWin) {
 		if (appData) {

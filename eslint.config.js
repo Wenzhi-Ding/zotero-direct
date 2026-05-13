@@ -16,8 +16,7 @@ export default defineConfig([
       globals: {
         console: "readonly",
         activeDocument: "readonly",
-        activeWindow: "readonly",
-        requestAnimationFrame: "readonly",
+        window: "readonly",
       },
     },
 

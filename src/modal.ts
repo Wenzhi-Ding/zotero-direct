@@ -161,7 +161,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 		this.buildSearchIndex();
 
 		// 数据加载完成后，延迟触发一次建议刷新
-		requestAnimationFrame(() => {
+		window.requestAnimationFrame(() => {
 			if (this.inputEl) {
 				this.inputEl.dispatchEvent(new Event('input'));
 			}
@@ -202,7 +202,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 	 */
 	private cancelPendingSearch(): void {
 		if (this.searchDebounceTimer) {
-			activeWindow.clearTimeout(this.searchDebounceTimer);
+			window.clearTimeout(this.searchDebounceTimer);
 			this.searchDebounceTimer = null;
 		}
 	}
@@ -237,7 +237,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 
 		// Schedule actual search after debounce (non-blocking)
 		const capturedQuery = query;
-		this.searchDebounceTimer = activeWindow.setTimeout(() => {
+		this.searchDebounceTimer = window.setTimeout(() => {
 			this.searchDebounceTimer = null;
 			this.searchCache = this.performSearch(capturedQuery);
 			this.lastSearchQuery = capturedQuery;
@@ -492,7 +492,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 			// After layout, dynamically truncate to fit one line
 			if (allAuthors.length > 2) {
 				const truncRanges = authorDisplayRanges.length > 0 ? authorDisplayRanges : undefined;
-				requestAnimationFrame(() => {
+				window.requestAnimationFrame(() => {
 					this.truncateAuthorsToFit(authorsEl, allAuthors, truncRanges);
 				});
 			}
