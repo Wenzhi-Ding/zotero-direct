@@ -1,5 +1,5 @@
 import MyPlugin from "./main";
-import { App, PluginSettingTab, Setting, Notice, debounce } from "obsidian";
+import { App, PluginSettingTab, Setting, Notice, debounce, SettingDefinitionItem } from "obsidian";
 import { FolderSuggest } from "./suggesters/FolderSuggester"
 import { t } from "./i18n";
 import { resolveZoteroDatabasePath } from "./zotero-path";
@@ -15,6 +15,199 @@ export class SettingTab extends PluginSettingTab {
 	constructor(app: App, plugin: MyPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
+	}
+
+	/**
+	 * Declarative settings for Obsidian 1.13.0+: feeds the settings search
+	 * index (and the declarative renderer). Must mirror display().
+	 */
+	getSettingDefinitions(): SettingDefinitionItem[] {
+		const s = t();
+		const { settings } = this.plugin;
+
+		return [
+			{
+				type: "group",
+				heading: s.sectionImportLibrary,
+				items: [
+					{
+						name: s.zoteroDbManualPathName,
+						desc: s.zoteroDbPathDesc,
+						control: {
+							type: "text",
+							key: "zoteroDbPath",
+							placeholder: s.zoteroDbPathPlaceholder,
+						},
+					},
+					{
+						name: s.cacheStatusName,
+						desc: s.cacheStatusDesc,
+						action: () => {
+							void this.rebuildCache();
+						},
+					},
+				],
+			},
+			{
+				type: "group",
+				heading: s.sectionExportNotes,
+				items: [
+					{
+						name: s.exportPathName,
+						desc: s.exportPathDesc,
+						control: {
+							type: "folder",
+							key: "exportPath",
+							placeholder: s.exportPathPlaceholder,
+						},
+					},
+					{
+						name: s.noteTitleName,
+						desc: s.noteTitleDesc,
+						control: {
+							type: "text",
+							key: "exportTitle",
+							placeholder: s.noteTitlePlaceholder,
+						},
+					},
+					{
+						name: s.selectTemplateName,
+						desc: s.selectTemplateDesc,
+						control: {
+							type: "dropdown",
+							key: "templateType",
+							options: {
+								"Plain": s.templatePlain,
+								"Admonition": s.templateAdmonition,
+								"Custom": s.templateCustom,
+							},
+						},
+					},
+					{
+						name: s.customTemplateName,
+						control: {
+							type: "textarea",
+							key: "templateContent",
+							rows: 10,
+						},
+						visible: () => settings.templateType === "Custom",
+					},
+					{
+						name: s.missingFieldsName,
+						desc: s.missingFieldsDesc,
+						control: {
+							type: "dropdown",
+							key: "missingfield",
+							options: {
+								"Leave placeholder": s.missingFieldLeavePlaceholder,
+								"Remove (entire row)": s.missingFieldRemoveRow,
+								"Replace with custom text": s.missingFieldReplaceCustom,
+							},
+						},
+					},
+					{
+						name: s.missingFieldReplacementName,
+						control: {
+							type: "text",
+							key: "missingfieldreplacement",
+						},
+						visible: () => settings.missingfield === "Replace with custom text",
+					},
+					{
+						name: s.multipleEntriesDividerName,
+						desc: s.multipleEntriesDividerDesc,
+						control: {
+							type: "textarea",
+							key: "multipleFieldsDivider",
+						},
+					},
+					{
+						name: s.formatNamesName,
+						desc: s.formatNamesDesc,
+						control: {
+							type: "textarea",
+							key: "nameFormat",
+						},
+					},
+					{
+						name: s.saveManualEditsName,
+						desc: s.saveManualEditsDesc,
+						control: {
+							type: "dropdown",
+							key: "saveManualEdits",
+							options: {
+								"Save Entire Note": s.saveEntireNote,
+								"Select Section": s.selectSection,
+								"Overwrite Entire Note": s.overwriteEntireNote,
+							},
+						},
+					},
+					{
+						name: s.saveManualEditsStartName,
+						desc: s.saveManualEditsStartDesc,
+						control: {
+							type: "text",
+							key: "saveManualEditsStart",
+						},
+						visible: () => settings.saveManualEdits === "Select Section",
+					},
+					{
+						name: s.saveManualEditsEndName,
+						desc: s.saveManualEditsEndDesc,
+						control: {
+							type: "text",
+							key: "saveManualEditsEnd",
+						},
+						visible: () => settings.saveManualEdits === "Select Section",
+					},
+				],
+			},
+			{
+				type: "group",
+				heading: s.sectionUpdateLibrary,
+				items: [
+					{
+						name: s.updateExistingAllName,
+						desc: s.updateExistingAllDesc,
+						control: {
+							type: "dropdown",
+							key: "updateLibrary",
+							options: {
+								"Only update existing notes": s.onlyUpdateExisting,
+								"Create new notes when missing": s.createNewWhenMissing,
+							},
+						},
+					},
+				],
+			},
+		];
+	}
+
+	/**
+	 * Re-evaluate conditional settings after a declarative control change.
+	 */
+	setControlValue(key: string, value: unknown): void | Promise<void> {
+		void super.setControlValue(key, value);
+		this.update();
+	}
+
+	private async rebuildCache(): Promise<void> {
+		const s = t();
+		const currentZoteroDb = resolveZoteroDatabasePath(this.plugin.settings.zoteroDbPath);
+		if (!currentZoteroDb.effectivePath) {
+			new Notice(s.cacheSetPathFirst);
+			return;
+		}
+		new Notice(s.cacheRebuilding);
+		try {
+			const data = await this.plugin.rebuildZoteroCache();
+			if (!data) {
+				return;
+			}
+			new Notice(s.cacheRebuiltSuccess(data.items.length));
+		} catch (e) {
+			new Notice(s.cacheRebuildFailed + (e as Error).message);
+		}
 	}
 
 		display(): void {
@@ -79,22 +272,8 @@ export class SettingTab extends PluginSettingTab {
 				button.setIcon("sync")
 					.setTooltip(s.cacheRebuildTooltip)
 					.onClick(async () => {
-						const currentZoteroDb = resolveZoteroDatabasePath(settings.zoteroDbPath);
-						if (!currentZoteroDb.effectivePath) {
-							new Notice(s.cacheSetPathFirst);
-							return;
-						}
-						new Notice(s.cacheRebuilding);
-						try {
-							const data = await this.plugin.rebuildZoteroCache();
-							if (!data) {
-								return;
-							}
-							new Notice(s.cacheRebuiltSuccess(data.items.length));
-							this.display();
-						} catch (e) {
-							new Notice(s.cacheRebuildFailed + (e as Error).message);						 
-						}
+						await this.rebuildCache();
+						this.display();
 					});
 			})
 			.addText((text) => {
