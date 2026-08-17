@@ -1,6 +1,6 @@
 {
 	"name": "zotero-direct",
-	"version": "0.11.0",
+	"version": "0.11.1",
 	"description": "Plugin to export and format annotations from Zotero into Obsidian",
 	"main": "main.js",
 	"type": "module",
