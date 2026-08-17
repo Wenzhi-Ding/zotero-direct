@@ -22,7 +22,7 @@ import {
 } from "./types";
 
 import { readZoteroDatabase, readZoteroDatabaseIncremental, ZoteroData } from "./zotero-db";
-import { clearCacheManager, getCacheManager, CachedReference } from "./zotero-cache";
+import { clearCacheManager, getCacheManager } from "./zotero-cache";
 import { resolveZoteroDatabasePath, ZoteroDbPathResolution } from "./zotero-path";
 
 import {
@@ -83,7 +83,7 @@ export default class ZoteroDirectPlugin extends Plugin {
 			}
 
 			return {
-				items: cache.items as Reference[],
+				items: cache.items,
 				collections: cache.collections,
 			};
 		}
@@ -93,7 +93,7 @@ export default class ZoteroDirectPlugin extends Plugin {
 
 			if (update && update.items.length > 0) {
 				cacheManager.updateCache(
-					update.items as CachedReference[],
+					update.items,
 					update.collections,
 					update.updatedItemKeys
 				);
@@ -106,7 +106,7 @@ export default class ZoteroDirectPlugin extends Plugin {
 					}
 
 					return {
-						items: updatedCache.items as Reference[],
+						items: updatedCache.items,
 						collections: update.collections,
 					};
 				}
@@ -118,7 +118,7 @@ export default class ZoteroDirectPlugin extends Plugin {
 				}
 
 				return {
-					items: cache.items as Reference[],
+					items: cache.items,
 					collections: cache.collections,
 				};
 			}
@@ -127,7 +127,7 @@ export default class ZoteroDirectPlugin extends Plugin {
 		}
 
 		const data = await readZoteroDatabase(dbPath);
-		cacheManager.updateCache(data.items as CachedReference[], data.collections);
+		cacheManager.updateCache(data.items, data.collections);
 		await cacheManager.saveCache();
 
 		if (this.settings.debugMode) {
@@ -154,7 +154,7 @@ export default class ZoteroDirectPlugin extends Plugin {
 		await cacheManager.clearCache();
 
 		const data = await readZoteroDatabase(dbPath);
-		cacheManager.updateCache(data.items as CachedReference[], data.collections);
+		cacheManager.updateCache(data.items, data.collections);
 		await cacheManager.saveCache();
 		return data;
 	}

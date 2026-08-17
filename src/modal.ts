@@ -873,7 +873,6 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 	// Perform action on the selected suggestion.
 	onChooseSuggestion(
 		item: ScoredReference,
-		_evt: MouseEvent | KeyboardEvent,
 	) {
 		void this.handleChooseSuggestion(item);
 	}
@@ -927,7 +926,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 	searchItems(query: string): Reference[] {
 		const dbPath = this.plugin.getEffectiveZoteroDbPath(false) ?? this.plugin.settings.zoteroDbPath;
 		const cacheManager = getCacheManager(this.app, dbPath);
-		return cacheManager.searchItems(query) as Reference[];
+		return cacheManager.searchItems(query);
 	}
 }
 

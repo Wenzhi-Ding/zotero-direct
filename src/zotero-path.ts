@@ -1,6 +1,4 @@
-import * as fs from "fs";
-import * as os from "os";
-import * as path from "path";
+import { fs, os, path } from "./node-api";
 import { Platform } from "obsidian";
 
 export type ZoteroDbPathSource = "manual" | "default" | null;

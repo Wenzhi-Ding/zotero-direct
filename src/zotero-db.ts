@@ -11,8 +11,7 @@
  * the library reading use case.
  */
 
-import * as fs from "fs";
-import * as path from "path";
+import { fs, path } from "./node-api";
 import { Reference, Collection } from "./types";
 import initSqlJs from "sql.js";
 
