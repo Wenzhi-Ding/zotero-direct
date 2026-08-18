@@ -117,8 +117,7 @@ If you need full annotation import features, we recommend using the original [st
   - {{localLibrary}}: link to the entry in the Zotero app
   - {{select}}: link to the attachment in the Zotero app
   - {{keywordsZotero}}: tags found in the entry metadata
-  - {{keywordsPDF}}: tags extracted from the PDF
-  - {{keywords}}, {{keywordsAll}}: both tags found in entry metadata and tags extracted from PDF
+  - {{keywords}}, {{keywordsAll}}: tags found in the entry metadata
   - {{collections}}: collections/folders where the entry is located
   - {{collectionsParent}}: collections/folders where the entry is located, plus parent folders
 

@@ -43,7 +43,6 @@ import {
 } from "./utils";
 
 import { ZoteroData } from "./zotero-db";
-import { getCacheManager } from "./zotero-cache";
 
 
 export class SelectReferenceModal extends SuggestModal<ScoredReference> {
@@ -134,15 +133,8 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 			//Extract the date the entry was modified
 			bibtexArrayItem.dateModified = selectedEntry.dateModified;
 
-			//Create the reference for search (includes all searchable text)
-			bibtexArrayItem.inlineReference =
-				bibtexArrayItem.authorKey +
-				", (" +
-				bibtexArrayItem.date +
-				"), " +
-				bibtexArrayItem.title +
-				"\n" +
-				bibtexArrayItem.citationKey;
+			//Extract tags for search matching
+			bibtexArrayItem.tags = selectedEntry.tags;
 
 			bibtexArray.push(bibtexArrayItem);
 		}
@@ -177,7 +169,7 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 		this.searchIndex = this.selectArray.map(item => {
 			const authorOriginal = item.authorKeyFullName || item.authorKey || "";
 			const abstractOriginal = item.abstractNote || "";
-			const tagsOriginal = item.zoteroTags?.join(" ") || "";
+			const tagsOriginal = item.tags?.map(t => t.tag).join(" ") || "";
 			return {
 				item,
 				titleLower: (item.title || "").toLowerCase(),
@@ -920,13 +912,6 @@ export class SelectReferenceModal extends SuggestModal<ScoredReference> {
 		this.searchIndex = [];
 		this.searchCache = [];
 		this.lastSearchSet = null;
-	}
-
-	// Enhanced search using cache data
-	searchItems(query: string): Reference[] {
-		const dbPath = this.plugin.getEffectiveZoteroDbPath(false) ?? this.plugin.settings.zoteroDbPath;
-		const cacheManager = getCacheManager(this.app, dbPath);
-		return cacheManager.searchItems(query);
 	}
 }
 

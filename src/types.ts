@@ -33,7 +33,6 @@ export interface Reference {
 	citationShort: string;
 	citationFull: string;
 	itemType: string;
-	inlineReference: string;
 	date: string;
 	dateModified: string;
 	itemKey: string;
@@ -74,7 +73,7 @@ export interface Reference {
 		itemType: string;
 		key: string;
 		note: string;
-		parentItem: "VMSSFNIR";
+		parentItem: string;
 		relations: string[];
 		tags: string[];
 		uri: string;
@@ -94,7 +93,6 @@ export interface Creator {
 }
 
 export interface Collection {
-	collections: string[];
 	items: string[];
 	key: string;
 	name: string;

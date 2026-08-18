@@ -115,8 +115,7 @@
   - {{localLibrary}}: Zotero 应用中该条目的链接
   - {{select}}: Zotero 应用中附件的链接
   - {{keywordsZotero}}: 条目元数据中的标签
-  - {{keywordsPDF}}: 从 PDF 中提取的标签
-  - {{keywords}}, {{keywordsAll}}: 条目元数据中的标签和从 PDF 中提取的标签
+  - {{keywords}}, {{keywordsAll}}: 条目元数据中的标签
   - {{collections}}: 条目所在的集合/文件夹
   - {{collectionsParent}}: 条目所在的集合/文件夹，以及这些的父文件夹
 

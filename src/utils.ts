@@ -687,7 +687,6 @@ export function createNoteTitle(
 
 export function replaceTagList(
 	selectedEntry: Reference,
-	arrayExtractedKeywords: string[],
 	metadata: string,
 	divider: string
 ) {
@@ -711,12 +710,10 @@ export function replaceTagList(
 		divider = divider + " ";
 	}
 
-	//Create three arrays for the tags from the metadata, tags exported from the text and tags combined
+	//Create an array with the tags from the metadata; the combined
+	//placeholders render the same list
 	const tagsZotero = selectedEntry.zoteroTags.sort();
-	const tagsPDF = arrayExtractedKeywords.sort();
-	const tagsCombined = tagsZotero.concat(tagsPDF).sort();
-
-	//metadata = createTagList(selectedEntry.zoteroTags, metadata)
+	const tagsCombined = tagsZotero;
 
 	//Replace in the text the tags extracted by Zotero
 	if (tagsZotero.length > 0) {
@@ -743,33 +740,6 @@ export function replaceTagList(
 			metadata,
 			`{{keywordsZotero}}`,
 			String(tagsZotero.join(divider))
-		);
-	}
-
-	//Replace in the text the tags extracted from the PDF
-	if (tagsPDF.length > 0) {
-		const tagsPDFBracket = tagsPDF.map(makeWiki);
-		metadata = replaceTemplate(
-			metadata,
-			`[[{{keywordsPDF}}]]`,
-			String(tagsPDFBracket.join(divider))
-		);
-		const tagsPDFQuotes = tagsPDF.map(makeQuotes);
-		metadata = replaceTemplate(
-			metadata,
-			`"{{keywordsPDF}}"`,
-			String(tagsPDFQuotes.join(divider))
-		);
-		const tagsPDFTags = tagsPDF.map(makeTags);
-		metadata = replaceTemplate(
-			metadata,
-			`#{{keywordsPDF}}`,
-			String(tagsPDFTags.join(divider))
-		);
-		metadata = replaceTemplate(
-			metadata,
-			`{{keywordsPDF}}`,
-			String(tagsPDF.join(divider))
 		);
 	}
 
@@ -853,17 +823,16 @@ export function parseCiteKeyFromNoteName(noteName:string, format:string) {
 	// find {{citeKey}} in note title format
 	const match = format.match("{{citeKey}}");
 	if (match != null) {
-		// search value of citekey in noteName using patterns around {{citekey}} in format string
-		// if format = '@{{citekey}}.md'
-		// then regExp = '@(s*[a-zA-Z0-9]+s*).md'
-		// works if format = '{{citekey}}.md' or '@{{citekey}}-{{title}}.md'
-		// formats like '@{{citekey}}{{title}}' won't work
+		// Build a pattern from the characters surrounding {{citeKey}} in the
+		// format string, with the citation key captured in between.
+		// if format = '@{{citeKey}}.md' then regExp = '@(\s*[a-zA-Z0-9\-._:]+\s*)\.md'
+		// formats like '@{{citeKey}}{{title}}' won't work (no separator)
 		const idx = match.index ?? 0;
-		const regExp = format.substring(
-			idx != 0 ? idx - 1 : idx, 
-			idx + match[0].length + 1)
-			.replace("{{citeKey}}", "(s*[a-zA-Z0-9]+s*)");
-		return noteName.match(regExp)?.[1];
+		const prefix = idx > 0 ? escapeRegExp(format.charAt(idx - 1)) : "";
+		const suffixRaw = format.charAt(idx + match[0].length);
+		const suffix = suffixRaw ? escapeRegExp(suffixRaw) : "";
+		const regExp = prefix + "(\\s*[a-zA-Z0-9\\-\\._:]+\\s*)" + suffix;
+		return noteName.match(regExp)?.[1]?.trim();
 	}
 	return undefined;
 }

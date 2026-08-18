@@ -1,7 +1,5 @@
 import { Plugin, Notice, TFile, normalizePath } from "obsidian";
 
-import 'turndown'
-
 import {
 	DEFAULT_SETTINGS,
 	templateAdmonition,
@@ -378,7 +376,6 @@ export default class ZoteroDirectPlugin extends Plugin {
 		//Create empty array to store information about the parent of the collections of the item
 		const collectionParentCode: string[] = [];
 		let collectionParentArray: string[] = [];
-		const collectionParentParent: string[] = [];
 
 		//identify the number of collections in the data
 		const collectionKeys: string[] = Object.keys(exportedCollections);
@@ -418,30 +415,6 @@ export default class ZoteroDirectPlugin extends Plugin {
 				if (!col) continue;
 				if (
 					collectionParentCode.includes(
-						col.key
-					)
-				) {
-					collectionParentArray.push(
-						col
-							.name
-					);
-				}
-			}
-		}
-
-		//loop through the collections and search for the name of the grandparent collection
-		if (collectionParentParent.length > 0) {
-			for (
-				let indexCollection = 0;
-				indexCollection < collectionKeys.length;
-				indexCollection++
-			) {
-				const key = collectionKeys[indexCollection];
-				if (!key) continue;
-				const col = exportedCollections[key];
-				if (!col) continue;
-				if (
-					collectionParentParent.includes(
 						col.key
 					)
 				) {
@@ -529,10 +502,7 @@ export default class ZoteroDirectPlugin extends Plugin {
 		return metadata;
 	}
 
-	// Function to extract the notes added manually
-
 	// Function to import the right template
-
 	importTemplate() {
 		let template = templatePlain;
 		if (this.settings.templateType === "Plain") {
@@ -808,10 +778,9 @@ export default class ZoteroDirectPlugin extends Plugin {
 			this.settings.exportTitle,
 			this.settings.exportPath
 		);
-		// Join the tags in the metadata with the tags extracted in the text and replace them in the text
+		// Join the tags in the metadata and replace them in the text
 		litnote = replaceTagList(
 			selectedEntry,
-			[],
 			litnote,
 			this.settings.multipleFieldsDivider
 		);

@@ -4,7 +4,7 @@
  * Caches Zotero database data with incremental updates.
  * Uses JSONL format (one JSON object per line) for efficient incremental saves:
  *   Line 1: metadata (version, timestamps, collections)
- *   Line 2+: one CachedReference per line
+ *   Line 2+: one Reference per line
  * 
  * Incremental save: reads existing file, removes changed items, appends
  * updated versions at the end — avoids full JSON.stringify of all items.
@@ -16,18 +16,11 @@ import { getDbModificationTime } from "./zotero-db";
 
 // ── Cache Types ─────────────────────────────────────────────────────
 
-export interface CachedReference extends Reference {
-	authorFullNames?: string[];
-	keywords?: string[];
-	jelCodes?: string[];
-	dateAdded?: string;
-}
-
 interface ZoteroCache {
 	version: number;
 	lastModified: string;
 	dbLastModified: number;
-	items: CachedReference[];
+	items: Reference[];
 	collections: Record<string, Collection>;
 	itemIndex: Record<string, number>; // citationKey -> index mapping
 }
@@ -114,13 +107,13 @@ export class ZoteroCacheManager {
 
 			const metadata = JSON.parse(firstLine) as CacheMetadata;
 
-			// Parse item lines — deduplicate by citationKey (last wins)
-			const itemMap = new Map<string, CachedReference>();
-			for (let i = 1; i < lines.length; i++) {
-				const line = lines[i];
-				if (!line || !line.trim()) continue;
-				try {
-					const item = JSON.parse(line) as CachedReference;
+		// Parse item lines — deduplicate by citationKey (last wins)
+		const itemMap = new Map<string, Reference>();
+		for (let i = 1; i < lines.length; i++) {
+			const line = lines[i];
+			if (!line || !line.trim()) continue;
+			try {
+				const item = JSON.parse(line) as Reference;
 					if (item.citationKey) {
 						itemMap.set(item.citationKey, item);
 					}
@@ -265,7 +258,7 @@ export class ZoteroCacheManager {
 	/**
 	 * Build citationKey -> index mapping for fast lookup
 	 */
-	private buildItemIndex(items: CachedReference[]): Record<string, number> {
+	private buildItemIndex(items: Reference[]): Record<string, number> {
 		const index: Record<string, number> = {};
 		items.forEach((item, i) => {
 			if (item.citationKey) {
@@ -305,7 +298,7 @@ export class ZoteroCacheManager {
 	 * the next incremental save.
 	 */
 	updateCache(
-		items: CachedReference[],
+		items: Reference[],
 		collections: Record<string, Collection>,
 		updatedItemKeys?: string[]
 	): void {
@@ -355,7 +348,7 @@ export class ZoteroCacheManager {
 	/**
 	 * Get item by citation key (fast lookup using index)
 	 */
-	getItemByCitationKey(citationKey: string): CachedReference | null {
+	getItemByCitationKey(citationKey: string): Reference | null {
 		if (!this.cache || !this.cache.itemIndex) {
 			return null;
 		}
@@ -364,143 +357,6 @@ export class ZoteroCacheManager {
 			return this.cache.items[index] ?? null;
 		}
 		return null;
-	}
-
-	/**
-	 * Search items by keyword (searches title, abstract, authors, keywords)
-	 * Supports combination search with multiple keywords separated by spaces.
-	 * Items matching all keywords are prioritized and sorted by match score.
-	 */
-	searchItems(query: string): CachedReference[] {
-		const results = this.searchItemsWithScore(query);
-		return results.map(r => r.item);
-	}
-
-	/**
-	 * Search items and return with scores for advanced sorting
-	 */
-	searchItemsWithScore(query: string): { item: CachedReference; score: number; matchesAllKeywords: boolean }[] {
-		if (!this.cache) {
-			return [];
-		}
-
-		const lowerQuery = query.toLowerCase().trim();
-		if (!lowerQuery) {
-			return this.cache.items.map(item => ({ item, score: 0, matchesAllKeywords: true }));
-		}
-
-		// Split query into individual keywords
-		const keywords = lowerQuery.split(/\s+/).filter(kw => kw.length > 0);
-		
-		const scoredItems: { item: CachedReference; score: number; matchesAllKeywords: boolean }[] = [];
-
-		for (const item of this.cache.items) {
-			// Get searchable text from various fields
-			const searchableText = this.getSearchableText(item);
-			
-			// Calculate match score
-			const scoreResult = this.calculateMatchScore(searchableText, keywords);
-			
-			if (scoreResult.score > 0) {
-				scoredItems.push({
-					item,
-					score: scoreResult.score,
-					matchesAllKeywords: scoreResult.matchesAll
-				});
-			}
-		}
-
-		// Sort by: 1) matches all keywords (desc), 2) score (desc)
-		scoredItems.sort((a, b) => {
-			if (a.matchesAllKeywords !== b.matchesAllKeywords) {
-				return a.matchesAllKeywords ? -1 : 1;
-			}
-			return b.score - a.score;
-		});
-
-		return scoredItems;
-	}
-
-	/**
-	 * Get searchable text from item fields
-	 */
-	private getSearchableText(item: CachedReference): string {
-		const parts: string[] = [];
-		
-		if (item.title) parts.push(item.title);
-		if (item.abstractNote) parts.push(item.abstractNote);
-		if (item.authorKey) parts.push(item.authorKey);
-		if (item.authorFullNames) parts.push(...item.authorFullNames);
-		if (item.keywords) parts.push(...item.keywords);
-		if (item.tags) parts.push(...item.tags.map(t => t.tag));
-		if (item.jelCodes) parts.push(...item.jelCodes);
-		if (item.publicationTitle) parts.push(item.publicationTitle);
-		if (item.citationKey) parts.push(item.citationKey);
-		
-		return parts.join(' ').toLowerCase();
-	}
-
-	/**
-	 * Calculate match score for an item
-	 * Returns score and whether all keywords were matched
-	 */
-	private calculateMatchScore(text: string, keywords: string[]): { score: number; matchesAll: boolean } {
-		let totalScore = 0;
-		let matchedKeywords = 0;
-
-		for (const keyword of keywords) {
-			let keywordScore = 0;
-
-			// Check for exact match (highest score)
-			if (text.includes(keyword)) {
-				keywordScore += 100;
-
-				// Bonus for word boundary match
-				const wordBoundaryRegex = new RegExp(`\\b${this.escapeRegex(keyword)}\\b`, 'i');
-				if (wordBoundaryRegex.test(text)) {
-					keywordScore += 50;
-				}
-
-				// Bonus for exact case match (for multi-word names like "Ross Levine")
-				if (text.toLowerCase().includes(keyword.toLowerCase())) {
-					keywordScore += 25;
-				}
-			}
-
-			// Check for fuzzy/partial match (lower score)
-			if (keywordScore === 0) {
-				// Check if any word in text starts with the keyword
-				const words = text.split(/\s+/);
-				for (const word of words) {
-					if (word.startsWith(keyword)) {
-						keywordScore += 30;
-						break;
-					}
-				}
-			}
-
-			if (keywordScore > 0) {
-				totalScore += keywordScore;
-				matchedKeywords++;
-			}
-		}
-
-		// Bonus for matching all keywords (scaled by number of keywords)
-		if (matchedKeywords === keywords.length && keywords.length > 1) {
-			totalScore += matchedKeywords * 200;
-		}
-
-		return {
-			score: totalScore,
-			matchesAll: matchedKeywords === keywords.length
-		};
-	}
-
-	/**
-	 * Escape special regex characters
-	 */
-	private escapeRegex(string: string): string {
-		return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 	}
 
 	/**
