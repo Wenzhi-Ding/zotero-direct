@@ -6,13 +6,14 @@
  * - When closed: reads the database file directly
  * - When open: reads the file via fs (SQLite shared read locks allow this)
  *
- * Note: When Zotero is open with WAL mode, very recent uncommitted changes
- * may not be visible (they're in the WAL file). This is acceptable for
- * the library reading use case.
+ * While Zotero is open it writes changes to the WAL file first, so the
+ * main file alone may lag behind. readDatabaseFileWithWal overlays the
+ * committed WAL content on the in-memory copy before parsing.
  */
 
 import { fs, path } from "./node-api";
 import { Reference, Collection } from "./types";
+import { readDatabaseFileWithWal } from "./zotero-wal";
 import initSqlJs from "sql.js";
 
 // ── Helper: safely convert unknown to string ─────────────────────────
@@ -118,7 +119,7 @@ export async function readZoteroDatabase(dbPath: string): Promise<ZoteroData> {
 	}
 
 	const SQL = await initSql();
-	const buffer = fs.readFileSync(dbPath);
+	const buffer = readDatabaseFileWithWal(dbPath);
 	const db = new SQL.Database(new Uint8Array(buffer));
 
 	// Optionally read BetterBibTeX citation keys
@@ -126,7 +127,7 @@ export async function readZoteroDatabase(dbPath: string): Promise<ZoteroData> {
 	const bbtDbPath = path.join(path.dirname(dbPath), "better-bibtex.sqlite");
 	if (fs.existsSync(bbtDbPath)) {
 		try {
-			const bbtBuf = fs.readFileSync(bbtDbPath);
+			const bbtBuf = readDatabaseFileWithWal(bbtDbPath);
 			const bbtDb = new SQL.Database(new Uint8Array(bbtBuf));
 			bbtCiteKeys = extractBBTCiteKeys(bbtDb);
 			bbtDb.close();
@@ -158,7 +159,7 @@ export async function readZoteroDatabaseIncremental(
 	}
 
 	const SQL = await initSql();
-	const buffer = fs.readFileSync(dbPath);
+	const buffer = readDatabaseFileWithWal(dbPath);
 	const db = new SQL.Database(new Uint8Array(buffer));
 
 	// Read BBT citation keys if not provided
@@ -166,7 +167,7 @@ export async function readZoteroDatabaseIncremental(
 		const bbtDbPath = path.join(path.dirname(dbPath), "better-bibtex.sqlite");
 		if (fs.existsSync(bbtDbPath)) {
 			try {
-				const bbtBuf = fs.readFileSync(bbtDbPath);
+				const bbtBuf = readDatabaseFileWithWal(bbtDbPath);
 				const bbtDb = new SQL.Database(new Uint8Array(bbtBuf));
 				bbtCiteKeys = extractBBTCiteKeys(bbtDb);
 				bbtDb.close();
@@ -326,7 +327,6 @@ export async function readZoteroDatabaseIncremental(
 				citationInLineFullName: "",
 				citationShort: "",
 				citationFull: "",
-				inlineReference: "",
 				file: "",
 				filePath: "",
 				zoteroReaderLink: "",
@@ -610,7 +610,6 @@ function extractItems(
 			citationInLineFullName: "",
 			citationShort: "",
 			citationFull: "",
-			inlineReference: "",
 			file: "",
 			filePath: "",
 			zoteroReaderLink: "",
@@ -670,7 +669,6 @@ function extractCollections(
 	for (const c of collRows) {
 		const key = asString(c.key);
 		result[key] = {
-			collections: [],
 			items: (itemsByCollection[c.collectionID as number] || []).map(String),
 			key: key,
 			name: asString(c.name),
