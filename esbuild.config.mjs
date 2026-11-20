@@ -17,6 +17,7 @@ const buildOptions = {
 	},
 	entryPoints: ['src/main.ts'],
 	bundle: true,
+	loader: { '.wasm': 'base64' },
 	external: ['obsidian', 'electron', ...builtinModules, ...builtinModules.map(m => `node:${m}`)],
 	format: 'cjs',
 	target: 'es2016',

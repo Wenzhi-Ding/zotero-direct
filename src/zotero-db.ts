@@ -15,6 +15,7 @@ import { fs, path } from "./node-api";
 import { Reference, Collection } from "./types";
 import { readDatabaseFileWithWal } from "./zotero-wal";
 import initSqlJs from "sql.js";
+import wasmBinaryBase64 from "sql.js/dist/sql-wasm-browser.wasm";
 
 // ── Helper: safely convert unknown to string ─────────────────────────
 
@@ -42,12 +43,24 @@ interface SqlJsStatic {
 let cachedSqlJs: SqlJsStatic | null = null;
 let sqlJsLoadingPromise: Promise<SqlJsStatic> | null = null;
 
+/**
+ * Decode the base64-embedded wasm binary. The binary ships inside main.js
+ * (esbuild .wasm=base64 loader) and matches the bundled sql.js glue, so
+ * initialization never touches the network and cannot drift from the glue.
+ */
+function decodeWasmBinary(base64: string): Uint8Array {
+	const binary = window.atob(base64);
+	const bytes = new Uint8Array(binary.length);
+	for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+	return bytes;
+}
+
 async function initSql(): Promise<SqlJsStatic> {
 	if (cachedSqlJs) return cachedSqlJs;
 	if (sqlJsLoadingPromise) return sqlJsLoadingPromise;
 
 	sqlJsLoadingPromise = initSqlJs({
-		locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/sql.js/dist/${file}`
+		wasmBinary: decodeWasmBinary(wasmBinaryBase64)
 	}) as unknown as Promise<SqlJsStatic>;
 
 	cachedSqlJs = await sqlJsLoadingPromise;
